@@ -1,0 +1,55 @@
+{% extends "base.html" %} {% block title %} HealthSuite Workflow Capability {%
+endblock %} {% block content %}
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<h2 style="text-align: center; padding: 15px;">HS Workflow Capability Demo</h2>
+
+<div class="card-wrapper">
+  <div class="card bg-blue-rp">
+    <a href="/register-new-patient" class="btn text-white"> 
+    <div class="card-info">      
+        <div class="card-body">
+            <i class="fa-solid fa-briefcase-medical fa-2x">
+                <h5 class="card-title">Register Patient</h5>
+            </i>
+        </div>     
+    </div>
+  </a>
+</div>
+    <div class="card text-white bg-blue-p">
+      <a href="/patients" class="btn text-white">
+      <div class="card-info">
+       
+          <div class="card-body">
+            <i class="fa-solid fa-user-group fa-2x"><h5 class="card-title">Patients</h5></i>
+            
+          </div>        
+      </div>
+    </a>
+    </div>
+    <div class="card text-white bg-blue-dm">
+      <a href="/deploy" class="btn text-white">
+      <div class="card-info">       
+          <div class="card-body">
+            <i class="fa-solid fa-network-wired fa-2x"><h5 class="card-title">Deploy Models</h5></i>            
+          </div>       
+      </div>
+    </a>
+    </div>
+  </div>
+
+  <footer class="bg-light text-center text-lg-start fixed-bottom">
+    <!-- Copyright -->
+    <div class="text-center p-1" style="background-color: rgba(0, 0, 0, 0.2)">
+        <img class="philips-logo" src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Philips_logo.svg"/>
+      © 2022 Copyright:
+      <a class="text-dark">Philips Research</a>
+    </div>
+    <!-- Copyright -->
+  </footer>
+
+  <script>$("#aHome").addClass("active");</script>
+  <script src="https://kit.fontawesome.com/c9f63861e0.js" crossorigin="anonymous"></script>
+  {% endblock %}
+</div>

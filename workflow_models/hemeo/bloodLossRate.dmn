@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="Definitions_10hbgzn" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.12.0">
+  <decision id="bloodLossRate" name="Decision 1">
+    <decisionTable id="DecisionTable_0l8eat0">
+      <input id="Input_1" label="bloodLossRate">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text></text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="risk" typeRef="string" />
+      <rule id="DecisionRule_0opsr0g">
+        <inputEntry id="UnaryTests_14cdmgj">
+          <text>&gt;=275</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1hr6443">
+          <text>1</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1jbi80c">
+        <inputEntry id="UnaryTests_0bazfn6">
+          <text>&lt;275</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1grno0q">
+          <text>0</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="bloodLossRate">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

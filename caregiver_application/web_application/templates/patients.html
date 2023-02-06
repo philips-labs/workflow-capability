@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %} Current Patients {% endblock %}
+{% block content %}
+
+    <h2>Patients:</h2>
+
+    <table class="table table-light table-striped text-center align-middle" >
+    <tr > <th>ID</th> <th>Name</th> <th> Care plans </th> </tr>
+        {% for i in range(0,len) %}
+            <tr>
+                    <td class="text-secondary"> {{ patient_list[i]["id"] }}</td>
+                {% if "name" in patient_list[i] %}
+                    <td> {{ patient_list[i]["name"][0]["given"][0] + " " +  patient_list[i]["name"][0]["family"]}}</td>
+                {% endif %}
+                    <td align="center" onclick="window.location.href='/patient/' + {{ patient_list[i]["id"] }};">
+                       <i class="fa fa-eye"></i> </td>
+            </tr>
+
+        {% endfor %}
+    </table>
+    <script>
+        $("#aPatients").addClass("active");
+    </script>
+{% endblock %}
+

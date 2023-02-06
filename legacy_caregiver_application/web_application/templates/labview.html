@@ -1,0 +1,43 @@
+{% extends "base-lab.html" %}
+{% block title %} Labview {% endblock %}
+{% block content %}
+    <h2> Create Lab Observation: </h2>
+    <form action="labview" method="post">
+        <label for="category">Category:</label>
+        <select id="category" name="category">
+            <option value="social-history"> Social History</option>
+            <option value="vital-signs">Vital Signs</option>
+            <option value="imaging">Imaging</option>
+            <option value="laboratory">Laboratory</option>
+            <option value="procedure">Procedure</option>
+            <option value="survey">Survey</option>
+            <option value="exam">Exam</option>
+            <option value="therapy">Therapy</option>
+            <option value="activity">Activity</option>
+        </select>
+        <br>
+        <label for="code">Loinc Code:</label>
+        <input type="text" id="code" name="code" />
+        <br>
+        <label for="patient">For Patient:</label>
+        <select id="patient" name="patient">
+            {% for i in range(0,len) %}
+                {% if "name" in patient_list[i] %}
+                <option value={{ patient_list[i]["id"] }}> {{ patient_list[i]["id"] + " " + patient_list[i]["name"][0]["given"][0] + " " +  patient_list[i]["name"][0]["family"]}}
+                {% else %}
+                <option value={{ patient_list[i]["id"] }}> {{ patient_list[i]["id"]}}
+                {% endif %}
+            {% endfor %}
+        </select>
+        <br>
+        <label for="value">Value:</label>
+        <input type="text" id="value" name="value" />
+        <br>
+        <label for="unit">Unit:</label>
+        <input type="text" id="unit" name="unit" />
+
+        <br>
+        <input type="submit">
+    </form>
+
+{% endblock %}

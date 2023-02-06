@@ -1,0 +1,9 @@
+camunda.bpm:
+  webapp:
+    index-redirect-enabled: true
+  admin-user:
+    id: admin
+    password: geheim
+    firstName: OOTI-2021
+  authorization:
+    enabled: false

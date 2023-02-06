@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %} Current Patients {% endblock %}
+{% block content %}
+
+    <h3>Available Patients:</h3>
+    <table class="table table-dark">
+    <tr> <th>PatientName</th> <th>PatientID</th> <th> Workflows </th> </tr>
+        {% for i in range(0,len) %}
+            <tr>
+                {% if "name" in patient_list[i] %}
+                    <td> {{ patient_list[i]["name"][0]["given"][0] + " " +  patient_list[i]["name"][0]["family"]}}</td>
+                {% endif %}
+                    <td> {{ patient_list[i]["id"] }}</td>
+                    <td> <button onclick="window.location.href='/patient/' + {{ patient_list[i]["id"] }};" type="button" class="btn btn-dark">Show Workflows</button> </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

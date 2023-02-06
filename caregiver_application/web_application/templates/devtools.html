@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %} Devtools {% endblock %}
+{% block content %}
+    <h2>Tools to delete from the FHIR Database:</h2>
+    <button onclick="window.location.href='/devtools/del-cp';" type="button" class="btn btn-dark">Delete All CarePlans</button>
+    <button onclick="window.location.href='/devtools/del-ts';" type="button" class="btn btn-dark">Delete All Tasks</button>
+    <button onclick="window.location.href='/devtools/del-pd';" type="button" class="btn btn-dark">Delete All PlanDefintiions</button>
+{% endblock %}

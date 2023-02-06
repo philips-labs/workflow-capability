@@ -1,0 +1,1 @@
+docker run -p 8180:8080 -e hapi.fhir.subscription.resthook_enabled=true hapiproject/hapi:latest

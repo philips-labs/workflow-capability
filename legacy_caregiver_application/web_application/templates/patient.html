@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %} Changed {% endblock %}
+{% block content %}
+    <h1> Welcome {{ name }} </h1>
+    <h2> Your current workflows running: </h2>
+    <table class="table table-dark">
+    <tr> <th>Workflow Name</th> <th>Workflow Identifier</th> <th> FHIR ID </th> <th> Workflow Tasks </th> </tr>
+     {% for i in range(0,len) %}
+         <tr>
+         <td>{{ care_plan_list[i]["name"] }}</td>
+         <td> {{ care_plan_list[i]["identifier"][0]["value"] }}</td>
+         <td> {{ care_plan_list[i]["id"] }} </td>
+         <td> <button onclick="window.location.href='/workflow/' + {{ care_plan_list[i]["id"] }};" type="button" class="btn btn-dark">Show Tasks</button> </td>
+         </tr>
+     {% endfor %}
+    </table>
+    <form action="apply" method="post">
+        <label for="workflow">Start New Workflow:</label>
+        <select id="workflow" name="workflow">
+            {% for i in range(0,all_len) %}
+                {% if "name" in all_plan_defs[i] %}
+                <option value={{ all_plan_defs[i]["id"] }}> {{ all_plan_defs[i]["id"] + " " + all_plan_defs[i]["name"]}}
+                {% else %}
+                <option value={{ all_plan_defs[i]["id"] }}> {{ all_plan_defs[i]["id"]}}
+                {% endif %}
+            {% endfor %}
+        </select>
+        <label for="patient">For Patient:</label>
+        <input value={{ patid }} id="patient" name="patient" readonly />
+        <input type="submit">
+    </form>
+
+{% endblock %}

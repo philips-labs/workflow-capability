@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %} Changed {% endblock %}
+{% block content %}
+    <!-- Add icon library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <h2> Care plans for "{{ name }}": </h2>
+    <table class="table table-light table-striped text-center align-middle">
+        <tr>
+            <th> FHIR ID</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th> Tasks</th>
+        </tr>
+        {% for i in range(0,len) %}
+            <tr>
+                <td> {{ care_plan_list[i]["id"] }}</td>
+                <td> {{ care_plan_list[i]["identifier"][0]["value"] }}</td>
+                <td> {{ care_plan_list[i]["status"] }}</td>
+                <td align="center" onclick="window.location.href='/workflow/' + {{ care_plan_list[i]["id"] }};">
+                    <i class="fa fa-eye"></i>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    
+
+
+    <form class="form-horizontal" action="/patient/{{patid}}" method="post">
+        <div class="container bg-light-grey"><br>
+            <div class="row">
+                <div class="col-sm-3 col-md-3 col-lg-3">
+                    <label for="workflow">Start care plan:</label>
+                </div>
+                <div class="col-sm-9 col-md-9 col-lg-9">
+                    <select id="workflow" name="workflow">
+                        {% for i in range(0,all_len) %}
+                            {% if "name" in all_plan_defs[i] %}
+                                <option class="form-text" value={{ all_plan_defs[i]["id"] }}> {{ all_plan_defs[i]["id"] + " " + all_plan_defs[i]["name"] }}
+                                    {% else %}
+                                <option class="form-text" value={{ all_plan_defs[i]["id"] }}> {{ all_plan_defs[i]["id"] }}
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <br>
+
+            <input value={{ patid }} id="patient" name="patient" type="hidden"/>
+
+            <div class="row text-center">
+                <div class="col-6 offset-3">
+                    <input type="submit" class="btn-lg bg-blue text-white px-5" value="Start"/>
+                </div>
+            </div>
+            <br>
+        </div>
+    </form>
+
+<script>
+    $("#aPatients").addClass("active");
+</script>
+
+{% endblock %}    

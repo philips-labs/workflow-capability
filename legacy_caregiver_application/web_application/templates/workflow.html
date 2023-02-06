@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %} Current Workflow {% endblock %}
+{% block content %}
+    <h1> Current tasks running for workflow with ID: {{ id }} </h1>
+    <table class="table">
+    <tr class="table-dark"> <th>Task Name</th> <th>Task Description</th> <th>FHIR Task ID</th> <th> Done? </th> </tr>
+     {% for i in range(0,len) %}
+
+             {% if task_list[i]['status'] == 'received' %}
+         <tr class="table-success">
+            {% else %}
+         <tr class="table-secondarynotion">
+            {% endif %}
+         {% for j in range(0,task_list[i]["identifier"]|length) %}
+             {% if task_list[i]["identifier"][j]["system"] ==  "taskName" %}
+             <td>{{ task_list[i]["identifier"][j]["value"]}}</td>
+             {% endif %}
+
+         {% endfor %}
+             <td>{{ task_list[i]["description"] }}</td>
+
+             <td> {{ task_list[i]["id"] }}</td>
+            <td>
+             {% if task_list[i]['status'] == 'received' %}
+              <button onclick="window.location.href='/workflow/' + {{ id }} + '/' + {{ task_list[i]["id"] }} + '/done';" type="button" class="btn btn-dark">Done</button>
+            {% endif %}
+            </td>
+         </tr>
+     {% endfor %}
+    </table>
+    <button onclick="window.location.href='/workflow/' + {{ id }};" type="button" class="btn btn-dark">Refresh Tasks</button>
+
+{% endblock %}

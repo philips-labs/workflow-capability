@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %} Current Workflow {% endblock %}
+
+{% block content %}
+<div> 
+    <span>Tasks running for workflow:</span>
+    <span><b> {{ workflowName }} </b></span>   
+</div>
+
+
+<div class="alert alert-success" role="alert">
+    Successfully added observation.
+  </div>
+
+
+<div> 
+    <span>Patient:</span>
+    <span>
+        <b><a style="color:#000000" href=/patient/{{ patId }}>{{ name }}</a></b>
+    </span>
+</div>
+<hr />
+
+<div class="refresh-wrapper" >
+    {% if (status != "completed") %}
+    <button onclick="window.location.href='/workflow/' + {{ id }};" type="button" class="btn btn-dark">Refresh
+        Tasks</button>
+        {% else %}
+        <div class="plan-completed">
+            <i class="bi bi-check"></i>
+            <span>Care plan completed!</span>
+        </div>
+        {% endif %}
+</div>
+
+<div class="alert-warning p-2" role="alert">
+    Note: If a task needs an observation, the observation <b>MUST</b> be added before the task is completed!
+</div>
+
+<br />
+<div class="workflow-wrapper">
+    {% for i in range(0,len) %}
+
+    <div class="task-wrapper">
+        <div class="task-line"></div>
+        <div {% if task_list[i]['status']=='received' %} class="task-icon task-running" {% else %}
+            class="task-icon task-success" {% endif %}>
+
+            <span onclick="window.location.href='/workflow/' + {{ id }} + '/' + {{ task_list[i]["id"] }} + '/done' ;">
+                {% if task_list[i]['status'] == 'received' %}
+                <i class="bi bi-plus-circle"></i>
+                {% else %}
+                <i class="bi bi-check"></i>
+                {% endif %}
+            </span>
+
+            <div class="task-info">
+                <div>
+                    <label><b>Instructions:</b></label> <span>{{ task_list[i]["description"] }}</span>
+                </div>               
+                <div class="observation-opener" >
+                    <span data-taskId={{ task_list[i]["id"] }}>
+                        <i class="bi bi-plus-circle add-observe"></i>
+                        <label>Observation</label>
+                    </span>                    
+                </div>
+                <!-- <div>
+                    <label>updated:</label> <span>
+                           {{ task_list[i]["meta"].lastUpdated }}                           
+                    </span>
+                </div> -->
+
+            </div>
+        </div>
+        <div>
+            {% for j in range(0,task_list[i]["identifier"]|length) %}
+            {% if task_list[i]["identifier"][j]["system"] == "taskName" %}
+            <span class="task-title">{{ task_list[i]["identifier"][j]["value"]}}</span>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+<div class="modal-wrapper">
+    <div class="close">
+        <i class="bi bi-x-lg"></i>
+    </div>
+    <div class="dialog">
+        
+        <form id="frmObservation" action="'/workflow/' + {{ id }} + '/' + taskId + '/' + '/observe'" method="POST">
+            <div class="form-item">
+                <div class="">
+                    <label for="observationType">Observation Type:</label>
+                </div>
+                <div class="">
+                    <select class="form-control" id="observationCode" placeholder="Observation Type" 
+                        name="observationCode" required>
+                        <option value="">- Select an observation type -</option>
+                        <option value="11331-6" data-type="quantity">Soberity value</option>
+                        <option value="8310-5" data-type="quantity">Temperature</option>
+                        <option value="9279-1" data-type="quantity">Respiratory Rate</option>
+                        <option value="8867-4" data-type="quantity">Heart Rate</option>
+                        <option value="85354-9" data-type="quantity">Blood test value</option>
+                        <option value="29252-4" data-type="string">CT Scan</option>
+                        <option value="24629-8" data-type="string">MRI Scan</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-item">
+                <div class="">
+                    <label for="observationValue">Value:</label>
+                </div>
+                <div class="">
+                    <input type="text" class="form-control" id="observationValue" placeholder="Observation Value"
+                        name="observationValue" required>
+                </div>
+            </div>
+            <div class="form-item text-center">
+                <button type="submit" id="btnSubmitObservation" class="btn btn-primary btn-md">Submit</button>
+                <input type="hidden" value="{{ patId }}" name="patientId" />
+                <input type="hidden" id="hidValueType" value="" name="obervationValueType" />
+                
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    $(function () {        
+        var currentTaskId = 0;
+        $(".task-info .observation-opener span").click(function () {
+            currentTaskId = $(this).attr("data-taskId");
+            var action = '/workflow/' + {{ id }} + '/' + currentTaskId + '/observe';
+            $("#frmObservation").attr("action",action);
+            $(".modal-wrapper").fadeIn();
+        });
+        $(".modal-wrapper .close").click(function () {
+            $(".modal-wrapper").fadeOut();
+        });       
+
+      var observeDone = getUrlVars()["observeDone"];
+      if(observeDone == "True")
+      {        
+        $(".alert").slideToggle();
+        hideAlert();
+      }    
+      else if(observeDone!== undefined)
+        alert("Adding observation failed!");
+
+        function hideAlert(){
+            setTimeout(() => {
+            $(".alert").slideToggle()
+        }, 3000);
+        }
+
+        $('#observationCode').change(()=>{
+            var dataType = $('#observationCode :selected').attr('data-type');
+            $('#hidValueType').val(dataType);
+        });       
+    });
+
+   
+</script>
+
+{% endblock %}

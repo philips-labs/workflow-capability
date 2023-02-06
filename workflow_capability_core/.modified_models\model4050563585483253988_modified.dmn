@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" exporter="Camunda Modeler" exporterVersion="4.8.1" id="Definitions_1d9822g" name="DRD" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="coagulationTable" name="Decision 1">
+    <decisionTable hitPolicy="FIRST" id="DecisionTable_1iht60j">
+      <input biodi:width="192" id="Input_1" label="ptValue">
+        <inputExpression id="InputExpression_1" typeRef="double">
+          <text>ptValue.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0pya1s7" label="inrValue">
+        <inputExpression id="LiteralExpression_0fsg2et" typeRef="double">
+          <text>inrValue.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <input biodi:width="192" id="InputClause_1rb54nc" label="apttValue">
+        <inputExpression id="LiteralExpression_07vm1vh" typeRef="double">
+          <text>apttValue.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="medicine" name="medicine" typeRef="boolean"/>
+      <rule id="DecisionRule_1g2ui11">
+        <inputEntry id="UnaryTests_0a52ad5">
+          <text>&lt; 18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_19luum3">
+          <text>&lt; 1.5</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1vheu50">
+          <text>&lt; 35</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0tcpruo">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0xf9jc4">
+        <inputEntry id="UnaryTests_0vlfin2">
+          <text>&gt; 12</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1bcqe9a">
+          <text>&gt; 0.8</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_10suizp">
+          <text>&lt; 35</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1csfp8y">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1snk6os">
+        <inputEntry id="UnaryTests_0b7h9p6">
+          <text/>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1pea3dj">
+          <text/>
+        </inputEntry>
+        <inputEntry id="UnaryTests_172dn7u">
+          <text/>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_01qdy6u">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="coagulationTable">
+        <dc:Bounds height="80" width="180" x="160" y="100"/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

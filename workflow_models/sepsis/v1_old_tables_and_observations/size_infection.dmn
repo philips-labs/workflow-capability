@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="Definitions_0pu82zj" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.12.0">
+  <decision id="infection_size" name="Decision 3">
+    <decisionTable id="DecisionTable_125jww8" hitPolicy="FIRST">
+      <input id="Input_1" label="bldResult">
+        <inputExpression id="InputExpression_1" typeRef="double">
+          <text>bldResult.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_08pv181" label="ctResult">
+        <inputExpression id="LiteralExpression_1b4n4q2" typeRef="double">
+          <text>ctResult.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1fqmc69" label="mriResult">
+        <inputExpression id="LiteralExpression_10dcw4q" typeRef="double">
+          <text>mriResult.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="isNormal" name="isNormal" typeRef="boolean" />
+      <rule id="DecisionRule_0sizxdy">
+        <inputEntry id="UnaryTests_14xmeyr">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0p7n3ur">
+          <text>&lt;1.5</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0wvdkr3">
+          <text>&lt;35</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_067ce8h">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0cu8acm">
+        <inputEntry id="UnaryTests_0repvk5">
+          <text>&gt;12</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1tzpp5i">
+          <text>&gt;0.8</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_12vqwn3">
+          <text>&lt;35</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1e30y8b">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0xa3gt9">
+        <inputEntry id="UnaryTests_0ah8125">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0akp279">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0kp19sf">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1cslzwp">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="infection_size">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %} Changed {% endblock %}
+{% block content %}
+<p>Workflow with ID {{ workflow }} has been successfully instantiated on Patient with ID {{ patient }}</p>
+<button onclick="window.location.href='/patient/' + {{ patient }};" type="button" class="btn btn-dark">Return</button>
+{% endblock %}

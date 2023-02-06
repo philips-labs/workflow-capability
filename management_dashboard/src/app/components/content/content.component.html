@@ -1,0 +1,256 @@
+<!-- Content Wrapper. Contains page content -->
+<div class = "content-wrapper">
+  <!-- Main content -->
+  <section class = "content">
+    <!--      Summary -->
+    <div class = "card">
+      <div class = "card-header bg-lightblue">
+        <h3 class = "card-title">Summary</h3>
+        <div class = "card-tools">
+          <button type = "button" class = "btn btn-tool" data-card-widget = "collapse" data-toggle = "tooltip"
+                  title = "Collapse">
+            <i class = "fas fa-minus"></i></button>
+          <button type = "button" class = "btn btn-tool" data-card-widget = "remove" data-toggle = "tooltip"
+                  title = "Remove">
+            <i class = "fas fa-times"></i></button>
+        </div>
+      </div>
+      <div class = "card-body">
+        <div class = "row">
+          <div class = "col-lg-3 col-6">
+            <!-- small box -->
+            <div class = "small-box bg-gray">
+              <div class = "inner">
+                <h3>{{totalPatientNumber}}</h3>
+                <p>All patients</p>
+              </div>
+              <div class = "icon">
+                <i class = "ion ion-person"></i>
+              </div>
+              <a href = "#" class = "small-box-footer">More info <i class = "fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <!-- ./col -->
+          <div class = "col-lg-3 col-6">
+            <!-- small box -->
+            <div class = "small-box bg-info">
+              <div class = "inner">
+                <h3>{{totalWFPatientNumber}}</h3>
+                <p>All patients in this protocol</p>
+              </div>
+              <div class = "icon">
+                <i class = "ion ion-stats-bars"></i>
+              </div>
+              <a href = "#" class = "small-box-footer">More info <i class = "fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <!-- ./col -->
+          <div class = "col-lg-3 col-6">
+            <!-- small box -->
+            <div class = "small-box bg-warning">
+              <div class = "inner">
+                <h3>{{active}}</h3>
+
+                <p>Patients under treatment in this protocol</p>
+              </div>
+              <div class = "icon">
+                <i class = "ion ion-person-add"></i>
+              </div>
+              <a href = "#" class = "small-box-footer">More info <i class = "fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <!-- ./col -->
+          <div class = "col-lg-3 col-6">
+            <!-- small box -->
+            <div class = "small-box bg-success">
+              <div class = "inner">
+                <h3>{{completed}}</h3>
+
+                <p>Patients completed the protocol</p>
+              </div>
+              <div class = "icon">
+                <i class = "ion ion-pie-graph"></i>
+              </div>
+              <a href = "#" class = "small-box-footer">More info <i class = "fas fa-arrow-circle-right"></i></a>
+            </div>
+          </div>
+          <!-- ./col -->
+
+        </div>
+      </div>
+    </div>
+    <!--      Charts-->
+    <div class = "card">
+      <div class = "card-header bg-lightblue">
+        <h3 class = "card-title">Charts</h3>
+
+        <div class = "card-tools">
+          <button type = "button" class = "btn btn-tool" data-card-widget = "collapse" data-toggle = "tooltip"
+                  title = "Collapse">
+            <i class = "fas fa-minus"></i></button>
+          <button type = "button" class = "btn btn-tool" data-card-widget = "remove" data-toggle = "tooltip"
+                  title = "Remove">
+            <i class = "fas fa-times"></i></button>
+        </div>
+      </div>
+      <div class = "card-body">
+        <div class = "row">
+
+          <section class = "col-lg-6 connectedSortable">
+            <div class="chart-wrapper">
+              <canvas baseChart
+                      [data]="patientChartData"
+                      [labels]="patientChartLabels"
+                      [chartType]="patientChartType">
+              </canvas>
+            </div>
+          </section>
+
+          <section class = "col-lg-6 connectedSortable">
+
+            <div class="chart-wrapper">
+              <canvas baseChart
+                      [datasets]="barChartData"
+                      [labels]="barChartLabels"
+                      [options]="barChartOptions"
+                      [plugins]="barChartPlugins"
+                      [legend]="barChartLegend"
+                      [chartType]="barChartType">
+              </canvas>
+
+            </div>
+          </section>
+        </div>
+      </div>
+
+    </div>
+
+<!--    &lt;!&ndash;      tables&ndash;&gt;-->
+<!--    <div class = "card">-->
+
+<!--      <div class = "card-header bg-lightblue">-->
+<!--        <h3 class = "card-title">Table</h3>-->
+
+<!--        <div class = "card-tools">-->
+<!--          <button type = "button" class = "btn btn-tool" data-card-widget = "collapse" data-toggle = "tooltip"-->
+<!--                  title = "Collapse">-->
+<!--            <i class = "fas fa-minus"></i></button>-->
+<!--          <button type = "button" class = "btn btn-tool" data-card-widget = "remove" data-toggle = "tooltip"-->
+<!--                  title = "Remove">-->
+<!--            <i class = "fas fa-times"></i></button>-->
+<!--        </div>-->
+<!--      </div>-->
+
+<!--      <div class = "card-body">-->
+<!--        <div class = "row">-->
+<!--          <div class = "col-12">-->
+<!--            <div class = "card">-->
+<!--              <div class = "card-header">-->
+<!--                <h3 class = "card-title">Tasks Reports</h3>-->
+<!--              </div>-->
+<!--              &lt;!&ndash; /.card-header &ndash;&gt;-->
+<!--              <div class = "card-body">-->
+<!--                <table id = "example1" class = "table table-bordered table-striped">-->
+<!--                  <thead>-->
+<!--                  <tr>-->
+<!--                    <th>Task name</th>-->
+<!--                    <th>Number of visits</th>-->
+<!--                    <th>.........</th>-->
+<!--                  </tr>-->
+<!--                  </thead>-->
+<!--                  <tbody>-->
+<!--                  <tr *ngFor="let item of tasksCount">-->
+<!--                    <td>{{item.title}}</td>-->
+<!--                    <td>{{item.count}}</td>-->
+<!--                    <td>.........</td>-->
+<!--                  </tr>-->
+<!--                  </tbody>-->
+<!--                </table>-->
+<!--              </div>-->
+<!--              &lt;!&ndash; /.card-body &ndash;&gt;-->
+<!--            </div>-->
+<!--            &lt;!&ndash; /.card &ndash;&gt;-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+
+
+
+
+    <!--      tables-->
+    <div class = "card">
+
+      <div class = "card-header bg-lightblue">
+        <h3 class = "card-title">Tasks Reports</h3>
+
+        <div class = "card-tools">
+          <button type = "button" class = "btn btn-tool" data-card-widget = "collapse" data-toggle = "tooltip"
+                  title = "Collapse">
+            <i class = "fas fa-minus"></i></button>
+          <button type = "button" class = "btn btn-tool" data-card-widget = "remove" data-toggle = "tooltip"
+                  title = "Remove">
+            <i class = "fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <div class = "card-body" *ngIf="planDefinitionID!=0">
+        <div class = "row">
+          <div class = "col-12">
+            <div class = "card">
+              <div class = "card-body">
+                <mat-form-field appearance="standard" style="border: 1px solid #dddddd;">
+                  <mat-label style="color: cadetblue">Search...</mat-label>
+                  <input matInput (keyup)="applyFilter($event)" placeholder="Search" #input  style="padding: 0px;">
+                </mat-form-field>
+
+                <div class="mat-elevation-z8">
+                  <table mat-table [dataSource]="dataSource" matSort style="background-color: white">
+
+                    <!-- ID Column -->
+                    <ng-container matColumnDef="title">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header > Task name </th>
+                      <td mat-cell *matCellDef="let row" style="color: black"> {{row.title}} </td>
+                    </ng-container>
+
+                    <!-- Name Column -->
+                    <ng-container matColumnDef="count" >
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header> Visits </th>
+                      <td mat-cell *matCellDef="let row"> {{row.count}} </td>
+                    </ng-container>
+
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+                    <!-- Row shown when there is no matching data. -->
+                    <tr class="mat-row" *matNoDataRow>
+                      <td class="mat-cell" colspan="4">No data matching the filter "{{input.value}}"</td>
+                    </tr>
+                  </table>
+
+                  <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page of users"></mat-paginator>
+                </div>
+
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->

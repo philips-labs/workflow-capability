@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" id="Definitions_0b4ynzf" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.8.1">
+  <decision id="bloodNormalValues" name="Decision 1">
+    <decisionTable id="DecisionTable_15f8s0x">
+      <input id="Input_1" label="bloodLossAmount" biodi:width="192">
+        <inputExpression id="InputExpression_1" typeRef="double">
+          <text>bloodLossAmount.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_13ic3sc" label="timeSinceBloodLoss">
+        <inputExpression id="LiteralExpression_0b2ju9e" typeRef="double">
+          <text>timeSinceBloodLoss</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" name="isNormal" typeRef="boolean" />
+      <rule id="DecisionRule_0lslxz3">
+        <inputEntry id="UnaryTests_1x3ehmi">
+          <text>&lt; 200</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ka3oq0">
+          <text>&lt;= 2.0</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_139xuye">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_16tinm8">
+        <inputEntry id="UnaryTests_13ueoya">
+          <text>&gt;= 200</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_16n7ot0">
+          <text>&lt;= 2.0</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_09vfktj">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_18psdkw">
+        <inputEntry id="UnaryTests_13kxw95">
+          <text>&lt; 100</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_11zkeia">
+          <text>&gt; 2.0</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_01fe3vd">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_11xjpgi">
+        <inputEntry id="UnaryTests_1iluqh9">
+          <text>&gt;= 100</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0gq2e6f">
+          <text>&gt; 2.0</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0lk9o2s">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="bloodNormalValues">
+        <dc:Bounds height="80" width="180" x="150" y="80" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

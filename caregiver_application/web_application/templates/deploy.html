@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %} Changed {% endblock %}
+{% block content %}
+<form method="POST" action="/deploy" enctype="multipart/form-data">
+    <input type="file" name="file" id="file" accept=".bpmn,.bpm,.dmn">
+    <input type="submit" value="Submit">
+</form>
+    {% if success == True %}
+    <p> Model is successfully Deployed</p>
+    {% endif %}
+
+    <script>
+        $("#aDeploy").addClass("active");
+    </script>
+{% endblock %}
+
+
+
+
+

@@ -1,0 +1,3 @@
+docker run -p 5432:5432 -e POSTGRES_PASSWORD=admin -d postgres
+sleep 3
+docker run -p 8180:8080 -v "/$(pwd)/../fhir_jpa_config:/data" -e "--spring.config.location=file:///data/application.yaml" hapiproject/hapi:latest

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0nhpz3r" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+  <bpmn:process id="Process_1t21xpa" name="Example User Task" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_071609k</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1au0v9t">
+        <bpmn:targetRef>DataObjectReference_0w4jyd8</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_0ngow2l" name="User Task 1">
+      <bpmn:incoming>Flow_071609k</bpmn:incoming>
+      <bpmn:outgoing>Flow_1o5usek</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_071609k" sourceRef="StartEvent_1" targetRef="Activity_0ngow2l" />
+    <bpmn:endEvent id="Event_15kq7lb">
+      <bpmn:incoming>Flow_1o5usek</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1o5usek" sourceRef="Activity_0ngow2l" targetRef="Event_15kq7lb" />
+    <bpmn:dataObjectReference id="DataObjectReference_0w4jyd8" name="Patient" dataObjectRef="DataObject_01gaur2">
+      <bpmn:documentation>FHIR(Patient)</bpmn:documentation>
+    </bpmn:dataObjectReference>
+    <bpmn:dataObject id="DataObject_01gaur2" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1t21xpa">
+      <bpmndi:BPMNEdge id="Flow_1o5usek_di" bpmnElement="Flow_1o5usek">
+        <di:waypoint x="440" y="327" />
+        <di:waypoint x="552" y="327" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_071609k_di" bpmnElement="Flow_071609k">
+        <di:waypoint x="215" y="327" />
+        <di:waypoint x="340" y="327" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="309" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1q9wdzh_di" bpmnElement="Activity_0ngow2l">
+        <dc:Bounds x="340" y="287" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_15kq7lb_di" bpmnElement="Event_15kq7lb">
+        <dc:Bounds x="552" y="309" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_0w4jyd8_di" bpmnElement="DataObjectReference_0w4jyd8">
+        <dc:Bounds x="179" y="115" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="179" y="85" width="36" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1au0v9t_di" bpmnElement="DataOutputAssociation_1au0v9t">
+        <di:waypoint x="197" y="309" />
+        <di:waypoint x="199" y="165" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

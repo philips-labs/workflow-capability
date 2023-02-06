@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %} Patient registration {% endblock %}
+{% block content %}
+
+<div class="container">
+  <h3>New Patient Registration Form</h3>
+
+  <form class="form-horizontal" action="/register-new-patient" method="POST">
+    <div class="form-group">
+      <div class="col-lg-6 col-sm-4">
+        <label class="col-sm-2" style="font-size:20px;" for="firstname">First Name:</label>
+      </div>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" id="firstname" placeholder="First Name" name="firstname" required>
+      </div>
+      <br />
+      <label style="font-size:20px;" for="lastname">Last Name:</label>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" id="lastname" placeholder="Last Name" name="lastname" required>
+      </div>
+    </div>
+    <br />
+    <div class="form-group">
+      <label class="col-sm-2" style="font-size:20px;" for="birthdate">Date of Birth:</label>
+      <div class="col-sm-4">
+        <input type="date" class="form-control" id="birthdate" placeholder="Date of Birth" name="birthdate" required>
+      </div>
+      <br />
+      <label class="col-sm-2" style="font-size:20px;" for="phone_number">Phone Number:</label>
+      <div class="col-sm-4">
+        <input type="text" class="form-control" id="phone_number" placeholder="Phone Number" name="phone_number"
+          required oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+      </div>
+    </div>
+    <br />
+    <div style="text-align: center;">
+      <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+    </div>
+  </form>
+  <br />
+  {% if success == True %}
+  <script>
+    window.location.href = "patient/" + {{id}};
+  </script>
+  {% endif %}
+</div>
+
+<script>
+  $("#aRegisterNewPatient").addClass("active");
+</script>
+
+{% endblock %}
