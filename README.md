@@ -1,11 +1,11 @@
-# HS Workflow Capability
-This is the HealthSuite Workflow Capability prototype. It is a tool to be used by caregivers and hospital management
+# Workflow Capability
+This is the Workflow Capability prototype. It is a tool to be used by caregivers and hospital management
 in order to (among others) start, control, and view the status of medical protocol workflows of patients. It currently supports custom implementations of the following medical protocols:
 - Sepsis diagnosis and treatment plan.  
 - Blood Loss guidance example for an ICU use case. 
 
 ## Contents
-- [HS Workflow Capability](#hs-workflow-capability)
+- [Workflow Capability](#hs-workflow-capability)
   - [Contents](#contents)
   - [Modules](#modules)
   - [Installation](#installation)

@@ -3,7 +3,7 @@ This folder contains BPMN and DMN models describing medical protocols of Blood L
 
 ## Description  
 There are three models available to execute through this application. 
-1) Blood Loss: This is a model for the Blood Loss protocol, created by Juan (the trainee who created the first prototype of HS Workflow Capability). 
+1) Blood Loss: This is a model for the Blood Loss protocol, created by Juan (the trainee who created the first prototype of Workflow Capability). 
 This model can be demonstrated with demo patients 1,2,3,4.  
 2) Sepsis v1: This is the first model we created for Sepsis protocol. It is the first full version and it utilizes the FHIR observations previously created for 
 the Blood Loss protocol. This model can be demonstrated with demo patients 1,2,3,4.  

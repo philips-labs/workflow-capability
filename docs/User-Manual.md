@@ -1,7 +1,7 @@
-This page will describe how to use the HealthSuite Workflow Capability Prototype. We will firstly give an overview on all accessible elements in the prototype, then describe how to execute certain functionality. 
+This page will describe how to use the Workflow Capability Prototype. We will firstly give an overview on all accessible elements in the prototype, then describe how to execute certain functionality. 
 
 # Overview
-This section describes an overview of the functionality of the HealthSuite Workflow Capbaility Prootype.
+This section describes an overview of the functionality of the Workflow Capbaility Prototype.
 
 ## Application
 When accessing the application, by default ([https://localhost:5000](https://localhost:5000)). You are presented with the following landing page:
