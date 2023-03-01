@@ -31,12 +31,12 @@ if errorlevel 1 (
 
 echo -- STARTING CAMUNDA --
 cd ..
-start java -jar engine\camunda\target\camunda_engine-0.0.2-SNAPSHOT.jar
+start call java -jar engine\camunda\target\camunda_engine-0.0.2-SNAPSHOT.jar ^& pause
 cd new_scripts
 
 echo -- STARTING CAREGIVER APP --
 cd ..
-start python caregiver_application\main.py
+start call python caregiver_application\main.py ^& pause
 cd new_scripts
 
 :: echo -- STARTING MANAGEMENT DASHBOARD --
