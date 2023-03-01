@@ -20,7 +20,7 @@ sleep 5
 echo "--- Wait until HAPI FHIR has started ---"
 # We wait by checking the last line of the logs of the container for the string "Started Application in"
 while true; do
-  CONTAINER_LOG_LAST_LINE=$(docker logs --tail 1 $CONTAINER_ID)
+  CONTAINER_LOG_LAST_LINE=$(docker logs --tail 20 $CONTAINER_ID)
   if [[ $CONTAINER_LOG_LAST_LINE == *"Started Application in"* ]]; then
     break
   fi
