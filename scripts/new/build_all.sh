@@ -17,7 +17,7 @@ echo ${C}---------- Caregiver app build-script finished ----------${NC}
 
 echo ${C}---------- Management Dashboard build-script starting ----------${NC}
 cd management_dashboard
-npm install
+npm install --legacy-peer-deps
 cd ..
 echo ${C}---------- Management Dashboard build-script finished ----------${NC}
 

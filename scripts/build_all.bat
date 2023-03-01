@@ -22,7 +22,7 @@ echo ---------- Caregiver app build-script finished ----------
 echo.
 echo ---------- Management Dashboard build-script starting ----------
 cd management_dashboard
-call npm install
+call npm install --legacy-peer-deps
 cd ..
 echo ---------- Management Dashboard build-script finished ----------
 
