@@ -16,7 +16,7 @@ cd ..
 docker run -d -p 8180:8080 -v "%cd%/fhir_jpa_config:/data" -e "--spring.config.location=file:///data/application.yaml" hapiproject/hapi:latest
 cd new_scripts
 :: get container id of this container
-set CONTAINER_ID=
+set CONTAINER_LOG_TAIL=
 for /f "usebackq tokens=*" %%a in (`docker ps --filter "ancestor=hapiproject/hapi:latest" --format "{{.ID}}"`) do set CONTAINER_ID=%%a
 @timeout /t 5 /nobreak>nul
 
@@ -24,7 +24,7 @@ echo --- Wait until HAPI FHIR has started ---
 :: We wait by checking the last line of the logs of the container for the string "Started Application in"
 set CONTAINER_LOG_TAIL=
 :can_continue
-for /f "delims=*" %%a in (`docker logs --tail 1 %CONTAINER_ID%`) do set CONTAINER_LOG_TAIL=%%a
+for /f "usebackq delims=*" %%a in (`docker logs --tail 10 %CONTAINER_ID%`) do set CONTAINER_LOG_TAIL=%%a
 echo %CONTAINER_LOG_TAIL% | findstr /C:"Started Application in" 1>nul
 if errorlevel 1 (
     @timeout /t 1 /nobreak>nul
