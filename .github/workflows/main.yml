@@ -8,19 +8,13 @@ jobs:
     name: Build camunda
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - name: Setup Java JDK
       uses: actions/setup-java@v3.10.0
       with:
         java-version: 19
         distribution: oracle
         java-package: jdk
-    - name: LS
-      run: |
-        ls
-        cd ./engine
-        ls
-        cd ./camunda
-        ls
     - name: Maven build camunda
       working-directory: engine/camunda
       run: mvn -B package --file pom.xml
