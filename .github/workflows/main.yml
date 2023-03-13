@@ -5,8 +5,8 @@ on:
 
 jobs:
   build_camunda:
-    name: build camunda
-    runs-on: ubuntu-18.04
+    name: Build camunda
+    runs-on: ubuntu-20.04
     steps:
     - name: Setup Java JDK
       uses: actions/setup-java@v3.10.0
@@ -14,7 +14,6 @@ jobs:
         java-version: 19
         distribution: oracle
         java-package: jdk
-    - name: Build camunda
-      run: |
-        cd ./engine/camunda
-        mvn -B package --file pom.xml
+    - name: Maven build camunda
+      working-directory: ./engine/camunda
+      run: mvn -B package --file pom.xml
