@@ -135,6 +135,13 @@ public class SubscriptionController {
         });
     }
 
+    @RequestMapping(
+            value = "/MakeFHIRResource/{method}/{resourceType}/{query}",
+            method = RequestMethod.POST)
+    @Async
+    void postObservationValue(@PathVariable("method") String method, @PathVariable("resourceType") String resourceType, @PathVariable("query") String query, @RequestBody String data) throws IOException {
+        this.engineQueryHandler.makeFhirResource(method, resourceType, query, data);
+    }
 
     /**
      * @param processID

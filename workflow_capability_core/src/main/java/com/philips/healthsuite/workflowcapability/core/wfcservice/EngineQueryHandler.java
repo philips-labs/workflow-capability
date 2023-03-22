@@ -3,9 +3,12 @@ package com.philips.healthsuite.workflowcapability.core.wfcservice;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
+
+import kong.unirest.HttpRequestWithBody;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
@@ -69,6 +72,28 @@ public class EngineQueryHandler {
         return null;
     }
 
+    public void makeFhirResource(String method, String resourceType, String query, @NotNull String data) {
+        HttpRequestWithBody httpRequestWithBody = null;
+
+        if(method.equals("POST")) {
+            httpRequestWithBody = Unirest.post(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+        } else if (method.equals("PUT")) {
+            httpRequestWithBody = Unirest.put(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+        } else if (method.equals("PATCH")) {
+            httpRequestWithBody = Unirest.patch(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+        } else if (method.equals("DELETE")) {
+            httpRequestWithBody = Unirest.delete(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+        }
+
+        if (httpRequestWithBody != null) {
+            httpRequestWithBody.header("Content-Type", "application/json+fhir")
+                    .body(data)
+                    .asJson();
+        }
+        else {
+            System.out.println("Incorrect method, please use POST, PUT, PATCH or DELETE");
+        }
+    }
 
     private void subscribeToFhirObject(String fhirResource, String query, IParser parser, String processID, String returnMessage, String variableName) {
         if (!pendingRequests.containsKey(processID)) {
