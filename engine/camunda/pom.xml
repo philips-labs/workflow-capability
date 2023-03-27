@@ -11,7 +11,7 @@
     <description>Camunda Engine package</description>
 
     <properties>
-        <camunda.spring-boot.version>7.18.0</camunda.spring-boot.version>
+        <camunda.spring-boot.version>7.19.0-alpha4</camunda.spring-boot.version>
         <spring-boot.version>2.6.6</spring-boot.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -30,10 +30,16 @@
     </dependencyManagement>
 
     <dependencies>
+       <!-- https://mvnrepository.com/artifact/com.esotericsoftware.yamlbeans/yamlbeans -->
+<dependency>
+    <groupId>com.esotericsoftware.yamlbeans</groupId>
+    <artifactId>yamlbeans</artifactId>
+    <version>1.15</version>
+</dependency>
         <dependency>
             <groupId>org.camunda.bpm</groupId>
             <artifactId>camunda-bom</artifactId>
-            <version>7.18.0</version>
+            <version>7.19.0-alpha4</version>
             <scope>compile</scope>
             <type>pom</type>
         </dependency>
@@ -52,7 +58,7 @@
         <dependency>
             <groupId>org.camunda.bpm</groupId>
             <artifactId>camunda-engine-plugin-spin</artifactId>
-            <version>7.18.0</version>
+            <version>7.19.0-alpha4</version>
         </dependency>
         <dependency>
             <groupId>org.camunda.spin</groupId>
