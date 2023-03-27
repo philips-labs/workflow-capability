@@ -135,12 +135,24 @@ public class SubscriptionController {
         });
     }
 
-    @RequestMapping(
+    /*@RequestMapping(
             value = "/MakeFHIRResource/{method}/{resourceType}/{query}",
             method = RequestMethod.POST)
     @Async
     void postObservationValue(@PathVariable("method") String method, @PathVariable("resourceType") String resourceType, @PathVariable("query") String query, @RequestBody String data) throws IOException {
+
+        System.out.println("Test: " + method + resourceType + query + data);
         this.engineQueryHandler.makeFhirResource(method, resourceType, query, data);
+    }*/
+
+    @RequestMapping(
+            value = "/MakeFHIRResource/{method}/{resourceType}",
+            method = RequestMethod.POST)
+    @Async
+    void postObservationValue(@PathVariable("method") String method, @PathVariable("resourceType") String resourceType, @RequestBody String data) throws IOException {
+
+        System.out.println("Test Q: " + method + resourceType + data);
+        this.engineQueryHandler.makeFhirResource(method, resourceType, "", data);
     }
 
     /**
