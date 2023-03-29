@@ -13,13 +13,13 @@ import java.util.List;
 public class WfcServiceApplication {
 
     public static void main(String[] args) {
-
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        context.scan("com.philips.healthsuite.workflowcapability.core.demos");
+        context.refresh();
+        FhirStoreInitialization fhirStoreInitialization = context.getBean(FhirStoreInitialization.class);
+        fhirStoreInitialization.run();
         if (args.length > 0) {
-            AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-            context.scan("com.philips.healthsuite.workflowcapability.core.demos");
-            context.refresh();
-            FhirStoreInitialization fhirStoreInitialization = context.getBean(FhirStoreInitialization.class);
-            fhirStoreInitialization.run();
+            
             List<String> argsList = List.of(args);
             if (argsList.contains("withAllDemos")) {
                 System.out.println("Running Preprocessing Step (all demos)");
