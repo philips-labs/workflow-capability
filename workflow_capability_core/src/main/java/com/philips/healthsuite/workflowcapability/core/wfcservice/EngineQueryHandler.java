@@ -74,15 +74,15 @@ public class EngineQueryHandler {
 
     public void makeFhirResource(String method, String resourceType, String query, @NotNull String data) {
         HttpRequestWithBody httpRequestWithBody = null;
-
+        String request = properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query;
         if(method.equals("POST")) {
-            httpRequestWithBody = Unirest.post(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+            httpRequestWithBody = Unirest.post(request);
         } else if (method.equals("PUT")) {
-            httpRequestWithBody = Unirest.put(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+            httpRequestWithBody = Unirest.put(request);
         } else if (method.equals("PATCH")) {
-            httpRequestWithBody = Unirest.patch(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+            httpRequestWithBody = Unirest.patch(request);
         } else if (method.equals("DELETE")) {
-            httpRequestWithBody = Unirest.delete(properties.get("config.fhirUrl") + "/fhir/" + resourceType + "?" + query);
+            httpRequestWithBody = Unirest.delete(request);
         }
 
         if (httpRequestWithBody != null) {

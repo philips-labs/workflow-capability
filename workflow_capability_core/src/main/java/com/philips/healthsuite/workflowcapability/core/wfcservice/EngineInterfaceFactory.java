@@ -5,7 +5,7 @@ import java.io.IOException;
 public class EngineInterfaceFactory {
 
     public EngineInterface getEngineInterface(String engineType) throws IOException {
-        if (engineType == "CAMUNDA") {
+        if (engineType.equals("Camunda")) {
             return new CamundaInterface();
         }
 
