@@ -179,7 +179,7 @@ public class FhirDataResources {
                 if (currentAction.getTitle() != null) {
                     task.addIdentifier().setSystem("taskName").setValue(currentAction.getTitle());
                 }
-                if(description != null && description.equals("")){
+                if(description != null && !description.equals("null") && !description.equals("")){
                     task.setDescription(description);
                 }
                 else if (currentAction.getDescription() != null) {
