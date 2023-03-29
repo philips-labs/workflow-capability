@@ -127,7 +127,7 @@ public class SubscriptionController {
             @Override
             public void run() {
                 try {
-                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received");
+                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received", "");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -169,12 +169,13 @@ public class SubscriptionController {
     void subscribeNewUserTask(
             @PathVariable("carePlanInstanceID") String carePlanInstanceID,
             @PathVariable("taskIdentifier") String taskIdentifier,
-            @PathVariable("taskID") String taskID) throws InterruptedException {
+            @PathVariable("taskID") String taskID,
+            @RequestBody String description) throws InterruptedException {
         Executors.newSingleThreadExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received");
+                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received", description);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
