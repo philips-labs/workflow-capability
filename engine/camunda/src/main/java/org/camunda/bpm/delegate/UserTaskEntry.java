@@ -25,7 +25,7 @@ public class UserTaskEntry implements TaskListener {
             e.printStackTrace();
         }
 
-        String description = null;
+        String description = "null";
 
         for(Documentation docs : delegateTask.getBpmnModelElementInstance().getDocumentations()) {
             description = docs.getRawTextContent();
@@ -33,18 +33,16 @@ public class UserTaskEntry implements TaskListener {
 
         StringBuffer sb = new StringBuffer();
         Matcher m = Pattern.compile("\\$\\((.*?)\\)").matcher(description);
-        int count = 1;
         while (m.find()) {
-            String reqVariable = m.group(count);
-            m.appendReplacement(sb, (String) delegateTask.getVariable(reqVariable));
-            count++;
+            String reqVariable = m.group(1);
+            m.appendReplacement(sb, delegateTask.getVariable(reqVariable).toString());
         }
         m.appendTail(sb);
 
         HttpResponse<JsonNode> httpResponse = Unirest.post(properties.getProperty("wfc.url") +
                 "/RequestUserTask/" + delegateTask.getProcessInstanceId() + "/" +
                 delegateTask.getTaskDefinitionKey() + "/" + delegateTask.getId())
-                .body(sb)
+                .body(sb.toString())
                 .asJson();
 
     }
