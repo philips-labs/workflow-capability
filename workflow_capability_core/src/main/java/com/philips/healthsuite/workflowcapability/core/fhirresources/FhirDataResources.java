@@ -120,7 +120,7 @@ public class FhirDataResources {
      * @param status             The current status of the task
      * @return MethodOutcome from the POST action to the FHIR Store
      */
-    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String status) throws InterruptedException {
+    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String status, String description) throws InterruptedException {
         Objects.requireNonNull(carePlanInstanceID);
         Objects.requireNonNull(actionID);
         Objects.requireNonNull(status);
@@ -179,7 +179,10 @@ public class FhirDataResources {
                 if (currentAction.getTitle() != null) {
                     task.addIdentifier().setSystem("taskName").setValue(currentAction.getTitle());
                 }
-                if (currentAction.getDescription() != null) {
+                if(description != null && description.equals("")){
+                    task.setDescription(description);
+                }
+                else if (currentAction.getDescription() != null) {
                     task.setDescription(currentAction.getDescription());
                 }
             }
