@@ -63,8 +63,13 @@ public class KnowledgeModelController {
         try {
             String fhirPlanDefinitionName = createFHIRObjects(bpmnModel);
             File modifiedFileName = addCamundaTags(bpmnModel);
-            deployModel(modifiedFileName, fhirPlanDefinitionName);
-            return "Model successfully deployed";
+            String outcome = deployModel(modifiedFileName, fhirPlanDefinitionName);
+
+            if(outcome == null) {
+                return "Problem with deploying model";
+            } else {
+                return "Model successfully deployed";
+            }
         } catch (IOException e) {
             return e.toString();
         } catch (SAXException e) {
@@ -106,8 +111,13 @@ public class KnowledgeModelController {
             transformer.transform(input, output);
 
             // Deploying model
-            deployModel(newFile, newFile.getName());
-            return "Model successfully deployed";
+            String outcome = deployModel(newFile, newFile.getName());
+
+            if(outcome == null) {
+                return "Problem with deploying model";
+            } else {
+                return "Model successfully deployed";
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return "Problem with deploying model";
@@ -269,8 +279,8 @@ public class KnowledgeModelController {
      * @param modelName
      * @throws IOException
      */
-    private void deployModel(File model, String modelName) throws IOException {
+    private String deployModel(File model, String modelName) throws IOException {
         EngineInterface engineInterface = engineInterfaceFactory.getEngineInterface("CAMUNDA");
-        engineInterface.deployModel(model, modelName);
+        return engineInterface.deployModel(model, modelName);
     }
 }

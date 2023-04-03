@@ -99,7 +99,7 @@ public class SubscriptionController {
             }
             
             if (!this.taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted.contains(completedTaskIdentifier)) {
-                engineInterface.completeTask(completedTaskIdentifier);
+                engineInterface.completeTask(completedTaskIdentifier, status);
                 this.taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted.add(completedTaskIdentifier);
 //                this.fhirDataResources.deleteTaskFromFhirStore(completedTask);
             }
