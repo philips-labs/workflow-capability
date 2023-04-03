@@ -5,6 +5,7 @@ import ca.uhn.fhir.parser.IParser;
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Task;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
@@ -86,9 +87,17 @@ public class SubscriptionController {
     void synchronizeCompletedTasksBetweenFhirAndEngine() throws IOException {
         EngineInterfaceFactory engineInterfaceFactory = new EngineInterfaceFactory();
         EngineInterface engineInterface = engineInterfaceFactory.getEngineInterface("CAMUNDA");
-        List<String> completedTasksIds = this.fhirDataResources.getRecentlyCompletedTasksIds(); // Tasks marked in FHIR as completed
+        List<Task> tasks = this.fhirDataResources.getRecentTasks(); // Tasks marked in FHIR as completed
 
-        for (String completedTaskIdentifier : completedTasksIds) {
+
+        for (Task task : tasks) {
+            String completedTaskIdentifier = task.getIdentifier().get(0).getValue();
+            String status = task.getStatus().toString();
+
+            if(!status.equalsIgnoreCase("completed") && !status.equalsIgnoreCase("cancelled")) {
+                continue;
+            }
+            
             if (!this.taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted.contains(completedTaskIdentifier)) {
                 engineInterface.completeTask(completedTaskIdentifier);
                 this.taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted.add(completedTaskIdentifier);

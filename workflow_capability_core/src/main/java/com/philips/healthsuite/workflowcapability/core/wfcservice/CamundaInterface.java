@@ -60,10 +60,18 @@ public class CamundaInterface implements EngineInterface {
     }
 
     @Override
-    public String completeTask(String taskID) {
+    public String completeTask(String taskID, String status) {
+        JSONObject jsonObject = new JSONObject();
+        JSONObject jsonVars = new JSONObject();
+        JSONObject processVariables = new JSONObject();
+        jsonVars.put("value", status);
+        jsonVars.put("type", "String");
+        processVariables.put("status", jsonVars);
+        jsonObject.put("variables", processVariables);
         HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl +
                         "/engine-rest/task/" + taskID + "/complete")
                 .header("Content-Type", "application/json")
+                .body(jsonObject)
                 .asJson();
         // I suppose httpResponse contains the response from Camunda after telling it to complete a task. Maybe we can use it
         return "ok";
