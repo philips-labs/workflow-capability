@@ -1,6 +1,9 @@
 package com.philips.healthsuite.workflowcapability.core;
 
 import com.philips.healthsuite.workflowcapability.core.demos.*;
+
+import kong.unirest.Unirest;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -95,6 +98,7 @@ public class WfcServiceApplication {
             }
         }
 
+        Unirest.config().socketTimeout(180000);
         SpringApplication.run(WfcServiceApplication.class, args);
     }
 
