@@ -5,9 +5,13 @@ import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.delegate.TaskListener;
+import org.camunda.bpm.model.bpmn.instance.Documentation;
+import org.camunda.bpm.model.bpmn.instance.UserTask;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UserTaskEntry implements TaskListener {
 
@@ -21,9 +25,25 @@ public class UserTaskEntry implements TaskListener {
             e.printStackTrace();
         }
 
+        String description = "null";
+
+        for(Documentation docs : delegateTask.getBpmnModelElementInstance().getDocumentations()) {
+            description = docs.getRawTextContent();
+        }
+
+        StringBuffer sb = new StringBuffer();
+        Matcher m = Pattern.compile("\\$\\((.*?)\\)").matcher(description);
+        while (m.find()) {
+            String reqVariable = m.group(1);
+            m.appendReplacement(sb, delegateTask.getVariable(reqVariable).toString());
+        }
+        m.appendTail(sb);
+
         HttpResponse<JsonNode> httpResponse = Unirest.post(properties.getProperty("wfc.url") +
                 "/RequestUserTask/" + delegateTask.getProcessInstanceId() + "/" +
-                delegateTask.getTaskDefinitionKey() + "/" + delegateTask.getId()).asJson();
+                delegateTask.getTaskDefinitionKey() + "/" + delegateTask.getId())
+                .body(sb.toString())
+                .asJson();
 
     }
 }

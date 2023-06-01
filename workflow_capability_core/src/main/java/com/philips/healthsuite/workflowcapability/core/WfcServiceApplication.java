@@ -1,6 +1,9 @@
 package com.philips.healthsuite.workflowcapability.core;
 
 import com.philips.healthsuite.workflowcapability.core.demos.*;
+
+import kong.unirest.Unirest;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -13,13 +16,13 @@ import java.util.List;
 public class WfcServiceApplication {
 
     public static void main(String[] args) {
-
+        
         if (args.length > 0) {
             AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-            context.scan("com.philips.healthsuite.workflowcapability.core.demos");
-            context.refresh();
-            FhirStoreInitialization fhirStoreInitialization = context.getBean(FhirStoreInitialization.class);
-            fhirStoreInitialization.run();
+        context.scan("com.philips.healthsuite.workflowcapability.core.demos");
+        context.refresh();
+        FhirStoreInitialization fhirStoreInitialization = context.getBean(FhirStoreInitialization.class);
+        fhirStoreInitialization.run();
             List<String> argsList = List.of(args);
             if (argsList.contains("withAllDemos")) {
                 System.out.println("Running Preprocessing Step (all demos)");
@@ -95,6 +98,7 @@ public class WfcServiceApplication {
             }
         }
 
+        Unirest.config().socketTimeout(180000);
         SpringApplication.run(WfcServiceApplication.class, args);
     }
 

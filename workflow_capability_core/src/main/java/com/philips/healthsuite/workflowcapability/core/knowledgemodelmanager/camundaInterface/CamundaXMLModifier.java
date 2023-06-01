@@ -2,6 +2,7 @@ package com.philips.healthsuite.workflowcapability.core.knowledgemodelmanager.ca
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -189,7 +190,14 @@ public class CamundaXMLModifier {
 
     private Node getEndEvent() {
         NodeList nList = doc.getElementsByTagName("bpmn:endEvent");
-        if (nList.getLength() > 0) {
+        if(nList.getLength() > 0) {
+            for(int i = 0; i < nList.getLength(); i++) {
+                NamedNodeMap attributes = nList.item(i).getAttributes();
+                if(attributes != null && attributes.getNamedItem("name") != null && attributes.getNamedItem("name").getNodeValue().equalsIgnoreCase("END")) {
+                    return nList.item(i);
+                }
+            }
+
             return nList.item(0);
         }
         return null;

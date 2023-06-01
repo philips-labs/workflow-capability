@@ -28,7 +28,7 @@ public interface EngineInterface {
      * @param taskID The instanceID of the Task to be completed
      * @return Confirmation that the task is succesfully completed as a String ( "ok" )
      */
-    String completeTask(String taskID);
+    String completeTask(String taskID, String status);
 
     /**
      * Sends a BPMN "Message" to the workflow engine for a certain instantiated Workflow.

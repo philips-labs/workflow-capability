@@ -2,6 +2,7 @@ package com.philips.healthsuite.workflowcapability.core.fhirresources;
 
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 import ca.uhn.fhir.rest.api.*;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
@@ -120,7 +121,7 @@ public class FhirDataResources {
      * @param status             The current status of the task
      * @return MethodOutcome from the POST action to the FHIR Store
      */
-    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String status) throws InterruptedException {
+    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String status, String description) throws InterruptedException {
         Objects.requireNonNull(carePlanInstanceID);
         Objects.requireNonNull(actionID);
         Objects.requireNonNull(status);
@@ -173,13 +174,16 @@ public class FhirDataResources {
                     task.setStatus(TaskStatus.READY);
             }
             task.setIntent(TaskIntent.UNKNOWN);
-			task.setExecutionPeriod(task.getExecutionPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
+			task.setExecutionPeriod(task.getExecutionPeriod().setStartElement(new DateTimeType(DateTimeUtil.getCurrentDateWithTimezone(), TemporalPrecisionEnum.MILLI)));
             task.addIdentifier().setSystem("camundaIdentifier").setValue(taskIdentifier);
             if (currentAction != null) {
                 if (currentAction.getTitle() != null) {
                     task.addIdentifier().setSystem("taskName").setValue(currentAction.getTitle());
                 }
-                if (currentAction.getDescription() != null) {
+                if(description != null && !description.equals("null") && !description.equals("")){
+                    task.setDescription(description);
+                }
+                else if (currentAction.getDescription() != null) {
                     task.setDescription(currentAction.getDescription());
                 }
             }
@@ -259,6 +263,21 @@ public class FhirDataResources {
         return outcome;
     }
 
+    /**
+     * Queries all Subscriptions from the FHIR Store
+     * @return Array of all Subscriptions
+     */
+    public Subscription[] getSubscriptions() {
+        Bundle subscriptionBundle = fhirClient.search()
+                .forResource(Subscription.class)
+                .returnBundle(Bundle.class)
+                .execute();
+        Subscription[] subscriptions = new Subscription[subscriptionBundle.getEntry().size()];
+        for (int i = 0; i < subscriptionBundle.getEntry().size(); i++) {
+            subscriptions[i] = (Subscription) subscriptionBundle.getEntry().get(i).getResource();
+        }
+        return subscriptions;
+    }
 
     /**
      * Queries PlanDefinition from the FHIR Store based on their ID
@@ -346,7 +365,7 @@ public class FhirDataResources {
         Identifier instanceIdentifier = new Identifier();
         carePlanIdentifier.add(instanceIdentifier.setSystem("wfEngine").setValue(instanceID));
         carePlan.setStatus(CarePlanStatus.ACTIVE);
-        carePlan.setPeriod(carePlan.getPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
+        carePlan.setPeriod(carePlan.getPeriod().setStartElement(new DateTimeType(DateTimeUtil.getCurrentDateWithTimezone(), TemporalPrecisionEnum.MILLI)));
         MethodOutcome outcome = fhirClient.update().resource(carePlan).execute();
         return outcome;
     }
@@ -357,18 +376,17 @@ public class FhirDataResources {
      *
      * @return List of completed Tasks
      */
-    public List<String> getRecentlyCompletedTasksIds() {
-        List<String> newTasks = new ArrayList<>();
+    public List<Task> getRecentTasks() {
+        List<Task> newTasks = new ArrayList<>();
         Bundle taskBundle = fhirClient.search()
                 .forResource(Task.class)
-                .where(Task.STATUS.exactly().code("completed"))
                 .sort(new SortSpec("_id", SortOrderEnum.DESC))
                 .returnBundle(Bundle.class)
                 .cacheControl(CacheControlDirective.noCache())
                 .count(5000)
                 .execute();
         for (BundleEntryComponent bundleElement : taskBundle.getEntry()) {
-            newTasks.add(((Task) bundleElement.getResource()).getIdentifier().get(0).getValue());
+            newTasks.add((Task) bundleElement.getResource());
         }
         return newTasks;
     }
@@ -452,7 +470,7 @@ public class FhirDataResources {
         Objects.requireNonNull(carePlan, "CarePlan not found for ID: " + carePlanInstanceID);
 
         carePlan.setStatus(CarePlanStatus.COMPLETED);
-        carePlan.setPeriod(carePlan.getPeriod().setEnd(DateTimeUtil.getCurrentDateWithTimezone()));
+        carePlan.setPeriod(carePlan.getPeriod().setEndElement(new DateTimeType(DateTimeUtil.getCurrentDateWithTimezone(), TemporalPrecisionEnum.MILLI)));
 
         fhirClient.update().resource(carePlan).execute();
     }

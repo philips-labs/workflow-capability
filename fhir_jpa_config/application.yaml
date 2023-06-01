@@ -100,7 +100,7 @@ hapi:
     #    mdm_enabled: true
 #    local_base_urls:
 #      - https://hapi.fhir.org/baseR4
-    mdm_enabled: true
+    mdm_enabled: false
     #    partitioning:
     #      allow_references_across_partitions: false
     #      partitioning_include_in_search_hashes: false
@@ -131,7 +131,7 @@ hapi:
     #    max_binary_size: 104857600
     #    max_page_size: 200
     #    retain_cached_searches_mins: 60
-    #    reuse_cached_search_results_millis: 60000
+    reuse_cached_search_results_millis: -1
     tester:
       home:
         name: Local Tester

@@ -5,6 +5,7 @@ import ca.uhn.fhir.parser.IParser;
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Task;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
@@ -86,11 +87,19 @@ public class SubscriptionController {
     void synchronizeCompletedTasksBetweenFhirAndEngine() throws IOException {
         EngineInterfaceFactory engineInterfaceFactory = new EngineInterfaceFactory();
         EngineInterface engineInterface = engineInterfaceFactory.getEngineInterface("CAMUNDA");
-        List<String> completedTasksIds = this.fhirDataResources.getRecentlyCompletedTasksIds(); // Tasks marked in FHIR as completed
+        List<Task> tasks = this.fhirDataResources.getRecentTasks(); // Tasks marked in FHIR as completed
 
-        for (String completedTaskIdentifier : completedTasksIds) {
+
+        for (Task task : tasks) {
+            String completedTaskIdentifier = task.getIdentifier().get(0).getValue();
+            String status = task.getStatus().toString();
+
+            if(!status.equalsIgnoreCase("completed") && !status.equalsIgnoreCase("cancelled")) {
+                continue;
+            }
+            
             if (!this.taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted.contains(completedTaskIdentifier)) {
-                engineInterface.completeTask(completedTaskIdentifier);
+                engineInterface.completeTask(completedTaskIdentifier, status);
                 this.taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted.add(completedTaskIdentifier);
 //                this.fhirDataResources.deleteTaskFromFhirStore(completedTask);
             }
@@ -127,7 +136,7 @@ public class SubscriptionController {
             @Override
             public void run() {
                 try {
-                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received");
+                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received", "");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -135,6 +144,25 @@ public class SubscriptionController {
         });
     }
 
+    /*@RequestMapping(
+            value = "/MakeFHIRResource/{method}/{resourceType}/{query}",
+            method = RequestMethod.POST)
+    @Async
+    void postObservationValue(@PathVariable("method") String method, @PathVariable("resourceType") String resourceType, @PathVariable("query") String query, @RequestBody String data) throws IOException {
+
+        System.out.println("Test: " + method + resourceType + query + data);
+        this.engineQueryHandler.makeFhirResource(method, resourceType, query, data);
+    }*/
+
+    @RequestMapping(
+            value = "/MakeFHIRResource/{method}/{resourceType}",
+            method = RequestMethod.POST)
+    @Async
+    void postObservationValue(@PathVariable("method") String method, @PathVariable("resourceType") String resourceType, @RequestBody String data) throws IOException {
+
+        System.out.println("Test Q: " + method + resourceType + data);
+        this.engineQueryHandler.makeFhirResource(method, resourceType, "", data);
+    }
 
     /**
      * @param processID
@@ -169,12 +197,13 @@ public class SubscriptionController {
     void subscribeNewUserTask(
             @PathVariable("carePlanInstanceID") String carePlanInstanceID,
             @PathVariable("taskIdentifier") String taskIdentifier,
-            @PathVariable("taskID") String taskID) throws InterruptedException {
+            @PathVariable("taskID") String taskID,
+            @RequestBody String description) throws InterruptedException {
         Executors.newSingleThreadExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received");
+                    fhirDataResources.createTask(taskIdentifier, carePlanInstanceID, taskID, "received", description);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
