@@ -235,6 +235,7 @@ public class KnowledgeModelController {
         modifier.addStartEventListener();
         modifier.addUserTaskListener();
         modifier.addReceiveTaskListener();
+        modifier.addSendTaskListener();
         modifier.addEndEventListener();
         return modifier.saveBPMNModel();
     }

@@ -87,6 +87,33 @@ public class CamundaXMLModifier {
         return doc.getElementsByTagName("bpmn:receiveTask");
     }
 
+    /**
+     * Adds the StartEventDelegate reference to the Send Task in the BPMN XML Definition
+     */
+    public void addSendTaskListener() {
+        NodeList sendTasks = this.getSendTasks();
+        for (int i = 0; i < sendTasks.getLength(); i++) {
+            Node sendTask = sendTasks.item(i);
+            Boolean hasDataInput = false;
+            // Check if the SendTasks is requesting Data from FHIR
+            if (sendTask.hasChildNodes()) {
+                NodeList childNodes = sendTask.getChildNodes();
+                for (int j = 0; j < childNodes.getLength(); j++) {
+                    if (childNodes.item(j).getNodeName() == "bpmn:dataInputAssociation") {
+                        hasDataInput = true;
+                    }
+                }
+            }
+            if (hasDataInput) {
+                addListenerToNode(sendTask, "org.camunda.bpm.delegate.SendTaskEntry", "startExecutionListener");
+            }
+        }
+    }
+
+    private NodeList getSendTasks() {
+        return doc.getElementsByTagName("bpmn:sendTask");
+    }
+
 
     private NodeList getUserTasks() {
         return doc.getElementsByTagName("bpmn:userTask");
