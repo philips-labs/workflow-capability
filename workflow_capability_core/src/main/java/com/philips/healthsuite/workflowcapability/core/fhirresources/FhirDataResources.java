@@ -259,6 +259,21 @@ public class FhirDataResources {
         return outcome;
     }
 
+    /**
+     * Queries all Subscriptions from the FHIR Store
+     * @return Array of all Subscriptions
+     */
+    public Subscription[] getSubscriptions() {
+        Bundle subscriptionBundle = fhirClient.search()
+                .forResource(Subscription.class)
+                .returnBundle(Bundle.class)
+                .execute();
+        Subscription[] subscriptions = new Subscription[subscriptionBundle.getEntry().size()];
+        for (int i = 0; i < subscriptionBundle.getEntry().size(); i++) {
+            subscriptions[i] = (Subscription) subscriptionBundle.getEntry().get(i).getResource();
+        }
+        return subscriptions;
+    }
 
     /**
      * Queries PlanDefinition from the FHIR Store based on their ID
