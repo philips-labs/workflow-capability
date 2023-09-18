@@ -58,6 +58,13 @@ public class CamundaXMLModifier {
 
     }
 
+    public void addServiceTaskListener() {
+        NodeList tasks = this.getServiceTasks();
+        for (int i = 0; i < tasks.getLength(); i++) {
+            addListenerToNode(tasks.item(i), "org.camunda.bpm.delegate.ServiceTaskEntry", "startExecutionListener");
+        }
+    }
+
     /**
      * Adds the StartEventDelegate reference to the Receive Task in the BPMN XML Definition
      */
@@ -90,6 +97,10 @@ public class CamundaXMLModifier {
 
     private NodeList getUserTasks() {
         return doc.getElementsByTagName("bpmn:userTask");
+    }
+
+    private NodeList getServiceTasks() {
+        return doc.getElementsByTagName("bpmn:serviceTask");
     }
 
     public void addListenerToNode(Node node, String classString, String type) {

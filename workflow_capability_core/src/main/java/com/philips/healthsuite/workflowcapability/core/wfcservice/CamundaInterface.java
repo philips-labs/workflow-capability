@@ -5,6 +5,7 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
+import org.apache.jena.base.Sys;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,14 +61,32 @@ public class CamundaInterface implements EngineInterface {
     }
 
     @Override
-    public String completeTask(String taskID) {
-        HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl +
-                        "/engine-rest/task/" + taskID + "/complete")
-                .header("Content-Type", "application/json")
-                .asJson();
-        // I suppose httpResponse contains the response from Camunda after telling it to complete a task. Maybe we can use it
-        return "ok";
+    public String completeTask(String taskId) {
+        try {
+            HttpResponse<JsonNode> httpResponse = Unirest.get(camundaUrl +
+                            "/engine-rest/task/" + taskId)
+                    .asJson();
+
+            if (httpResponse.getStatus() == 200) {
+                httpResponse = Unirest.post(camundaUrl +
+                                "/engine-rest/task/" + taskId + "/complete")
+                        .header("Content-Type", "application/json")
+                        .asJson();
+
+                if (httpResponse.getStatus() == 204) {
+                    System.out.println("Task with id " + taskId + " has been completed.");
+                    return "Task completed";
+                } else {
+                    return "Error completing task: " + httpResponse.getStatusText();
+                }
+            } else {
+                return "Task not found";
+            }
+        } catch (Exception e) {
+            return "Exception caught: " + e.getMessage();
+        }
     }
+
 
     @Override
     public void sendMessage(String messageID, String processID, String variableName, String variableJson) {
@@ -89,6 +108,31 @@ public class CamundaInterface implements EngineInterface {
                 .body(jsonObject)
                 .asJson();
 
+    }
+
+    public void sendVariable(String processInstanceId,
+                             String variableName, Integer variableValue) {
+        JSONObject newVariable = new JSONObject();
+        newVariable.put("type", "Integer");
+        newVariable.put("value", variableValue);
+
+        JSONObject modifications = new JSONObject();
+        modifications.put(variableName, newVariable);
+
+        JSONObject variables = new JSONObject();
+        variables.put("modifications", modifications);
+
+        try {
+            System.out.println(processInstanceId);
+            System.out.println(variables);
+            HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl +
+                            "/engine-rest/process-instance/" + processInstanceId + "/variables")
+                    .header("Content-Type", "application/json")
+                    .body(variables)
+                    .asJson();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

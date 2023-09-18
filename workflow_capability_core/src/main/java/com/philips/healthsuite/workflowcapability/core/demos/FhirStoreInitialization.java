@@ -1,10 +1,14 @@
 package com.philips.healthsuite.workflowcapability.core.demos;
 
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
+import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Subscription;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -28,6 +32,7 @@ public class FhirStoreInitialization {
 
         addTaskSubscription();
         addCarePlanSubscription();
+        addMedicationStatementSubscription();
     }
 
 
@@ -40,6 +45,25 @@ public class FhirStoreInitialization {
                 .setType(Subscription.SubscriptionChannelType.RESTHOOK)
                 .setEndpoint(wfcUrl + "/OnTaskChange"));
         fhirDataResources.addResource(taskSubscription);
+    }
+
+    public void addMedicationStatementSubscription() {
+        Subscription medicationSubscription = new Subscription();
+        medicationSubscription.setStatus(Subscription.SubscriptionStatus.REQUESTED);
+        medicationSubscription.setReason("Trigger when a MedicationStatement is completed");
+        medicationSubscription.setCriteria("MedicationStatement?status=completed");
+
+        Subscription.SubscriptionChannelComponent channel = new Subscription.SubscriptionChannelComponent();
+        channel.setType(Subscription.SubscriptionChannelType.RESTHOOK);
+        channel.setEndpoint(wfcUrl + "/MedicationStatementChange");
+        channel.setPayload("application/fhir+json");
+
+        List<StringType> headers = new ArrayList<>();
+        headers.add(new StringType("Content-Type: application/fhir+json"));
+
+        channel.setHeader(headers);
+        medicationSubscription.setChannel(channel);
+        fhirDataResources.addResource(medicationSubscription);
     }
 
 
