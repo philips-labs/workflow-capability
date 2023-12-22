@@ -234,6 +234,7 @@ public class KnowledgeModelController {
         CamundaXMLModifier modifier = new CamundaXMLModifier(xmlFile);
         modifier.addStartEventListener();
         modifier.addUserTaskListener();
+        modifier.addServiceTaskListener();
         modifier.addReceiveTaskListener();
         modifier.addEndEventListener();
         return modifier.saveBPMNModel();

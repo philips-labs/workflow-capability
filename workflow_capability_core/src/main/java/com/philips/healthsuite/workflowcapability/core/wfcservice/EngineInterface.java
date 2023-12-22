@@ -40,4 +40,6 @@ public interface EngineInterface {
      * @param variableJson The JSON value of the payload variable
      */
     void sendMessage(String messageID, String processID, String variableName, String variableJson);
+
+    void sendVariable(String processID, String variableName, Integer variableValue);
 }

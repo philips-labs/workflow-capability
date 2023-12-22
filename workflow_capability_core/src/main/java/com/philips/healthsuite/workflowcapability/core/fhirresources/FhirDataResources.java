@@ -4,6 +4,7 @@ package com.philips.healthsuite.workflowcapability.core.fhirresources;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.*;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -118,9 +119,10 @@ public class FhirDataResources {
      * @param carePlanInstanceID ID of the CarePlan the Task should be appended to
      * @param actionID           ID of the action in the PlanDefinition with the Task's information
      * @param status             The current status of the task
+     * @param code               The code indicates the type of task (ServiceTask, UserTask)
      * @return MethodOutcome from the POST action to the FHIR Store
      */
-    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String status) throws InterruptedException {
+    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String taskName, String status, String code) throws InterruptedException {
         Objects.requireNonNull(carePlanInstanceID);
         Objects.requireNonNull(actionID);
         Objects.requireNonNull(status);
@@ -159,6 +161,10 @@ public class FhirDataResources {
                 }
             }
             Task task = new Task();
+
+            Reference forRef = carePlan.getSubject();
+            task.setFor(forRef);
+
             switch (status) {
                 case "ready":
                     task.setStatus(TaskStatus.READY);
@@ -169,15 +175,30 @@ public class FhirDataResources {
                 case "received":
                     task.setStatus(TaskStatus.RECEIVED);
                     break;
+                case "in-progress":
+                    task.setStatus(TaskStatus.INPROGRESS);
+                    break;
                 default:
                     task.setStatus(TaskStatus.READY);
             }
+
+            CodeableConcept taskType = new CodeableConcept();
+            Coding coding = taskType.addCoding();
+            coding.setSystem("http://example.com/task-codes");
+            coding.setCode(code);
+            coding.setDisplay(code);
+            task.setCode(taskType);
+
             task.setIntent(TaskIntent.UNKNOWN);
 			task.setExecutionPeriod(task.getExecutionPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
             task.addIdentifier().setSystem("camundaIdentifier").setValue(taskIdentifier);
             if (currentAction != null) {
                 if (currentAction.getTitle() != null) {
-                    task.addIdentifier().setSystem("taskName").setValue(currentAction.getTitle());
+                    if (taskName != null) {
+                        task.addIdentifier().setSystem("taskName").setValue(taskName);
+                    } else {
+                        task.addIdentifier().setSystem("taskName").setValue(currentAction.getTitle());
+                    }
                 }
                 if (currentAction.getDescription() != null) {
                     task.setDescription(currentAction.getDescription());
@@ -191,6 +212,7 @@ public class FhirDataResources {
             List<CarePlanActivityComponent> activityList = carePlan.getActivity();
             activityList.add(activity);
             carePlan.setActivity(activityList);
+
 
             return fhirClient.update().resource(carePlan).execute();
         }
@@ -371,6 +393,52 @@ public class FhirDataResources {
             newTasks.add(((Task) bundleElement.getResource()).getIdentifier().get(0).getValue());
         }
         return newTasks;
+    }
+
+    /**
+     * Returns a list of medicationStatement
+     * @param patientId
+     * @return
+     */
+    public Map<String, Integer> getMedicationStatementDoseSums(String patientId) {
+        Map<String, Integer> medicationDoseSums = new HashMap<>();
+
+        Bundle medicationStatementBundle = fhirClient.search()
+                .forResource(MedicationStatement.class)
+                .where(MedicationStatement.PATIENT.hasId(patientId))
+                .where(MedicationStatement.STATUS.exactly().code("completed"))
+                .returnBundle(Bundle.class)
+                .cacheControl(CacheControlDirective.noCache())
+                .execute();
+
+        for (Bundle.BundleEntryComponent bundleElement : medicationStatementBundle.getEntry()) {
+            MedicationStatement medicationStatement = (MedicationStatement) bundleElement.getResource();
+
+            String medicationName = medicationStatement.getMedicationCodeableConcept().getCodingFirstRep().getDisplay();
+            Integer dosage = medicationStatement.getDosageFirstRep().getDoseAndRateFirstRep().getDoseQuantity().getValue().intValue();;
+
+            medicationDoseSums.put(medicationName, medicationDoseSums.getOrDefault(medicationName, 0) + dosage);
+        }
+
+        return medicationDoseSums;
+    }
+
+
+    public CarePlan getCarePlanByPatientId(String patientId) {
+        Bundle response = fhirClient.search()
+                .forResource(CarePlan.class)
+                .where(CarePlan.PATIENT.hasId(patientId))
+                .and(CarePlan.STATUS.exactly().code("active"))
+                .sort().descending(CarePlan.DATE)
+                .limitTo(1)  // Limit results to one entry
+                .returnBundle(Bundle.class)
+                .execute();
+
+        if (!response.getEntry().isEmpty()) {
+            return (CarePlan) response.getEntry().get(0).getResource();
+        } else {
+            return null;
+        }
     }
 
 
