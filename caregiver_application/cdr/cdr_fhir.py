@@ -229,7 +229,7 @@ class Cdr:
         task['executionPeriod']['end'] = self.get_time_with_timezone()
         # print(task)
         json = self.update_task(taskid, task)
-        print(json)
+        print(" Task set to done: ", json)
         return None
 
     def create_task(self, cp):
@@ -248,6 +248,7 @@ class Cdr:
         task_url = "/Task/"+str(task_id)
         if "id" not in task_props:
             task_props["id"] = task_id
+        print("Update task: ", task_props, "  - ", self.base_url+task_url)
         response = requests.put(self.base_url+task_url, data=str(task_props), headers=self.header)
         return json.loads(response.text) if response else None
 
@@ -285,15 +286,24 @@ class Cdr:
         except:
             return None
 
-    def get_observation(self, obsv_id):
-        try:
-            if not obsv_id.startswith("Observation/"):
-                obsv_id = "Observation/" + obsv_id
-            response = requests.get(f"{self.base_url}/{obsv_id}", headers=self.header)
-            return json.loads(response.text) if response else None
-        except:
-            return None
-
+    # def get_observation(self, obsv_id):
+    #     try:
+    #         if not obsv_id.startswith("Observation/"):
+    #             obsv_id = "Observation/" + obsv_id
+    #         response = requests.get(f"{self.base_url}/{obsv_id}", headers=self.header)
+    #         return json.loads(response.text) if response else None
+    #     except:
+    #         return None
+    
+    # get observations for a patient and a specific code is fetching in this method, 
+    def get_observations_for_patient_and_code(self, patient_id, observation_code):
+        query_url = f"{self.base_url}/Observation?subject=Patient/{patient_id}&code={observation_code}"
+        response = requests.get(query_url, headers=self.header)
+        if response.status_code == 200:
+            response_json = response.json()
+            if "entry" in response_json:
+                return [entry["resource"] for entry in response_json["entry"]]
+        return []
 
     def find_patient(self, patient_search_filter):
         return self.get_resource("Patient?" + patient_search_filter)

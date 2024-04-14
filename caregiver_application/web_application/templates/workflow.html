@@ -12,7 +12,6 @@
     Successfully added observation.
   </div>
 
-
 <div> 
     <span>Patient:</span>
     <span>
@@ -39,50 +38,37 @@
 
 <br />
 <div class="workflow-wrapper">
-    {% for i in range(0,len) %}
+    {% for task in task_list %}
 
     <div class="task-wrapper">
         <div class="task-line"></div>
-        <div {% if task_list[i]['status']=='received' %} class="task-icon task-running" {% else %}
-            class="task-icon task-success" {% endif %}>
-
-            <span onclick="window.location.href='/workflow/' + {{ id }} + '/' + {{ task_list[i]["id"] }} + '/done' ;">
-                {% if task_list[i]['status'] == 'received' %}
-                <i class="bi bi-plus-circle"></i>
-                {% else %}
-                <i class="bi bi-check"></i>
-                {% endif %}
+        <div class="{{ 'task-icon task-running' if task['status'] == 'received' else 'task-icon task-success' }}">
+            <span onclick="window.location.href='/workflow/{{ id }}/{{ task['id'] }}/done';">
+                <i class="bi {{ 'bi-plus-circle' if task['status'] == 'received' else 'bi-check' }}"></i>
             </span>
-
             <div class="task-info">
                 <div>
-                    <label><b>Instructions:</b></label> <span>{{ task_list[i]["description"] }}</span>
+                    <label><b>Instructions:</b></label> <span>{{ task["description"] }}</span>
                 </div>               
-                <div class="observation-opener" >
-                    <span data-taskId={{ task_list[i]["id"] }}>
+                <div class="observation-opener">
+                    <span data-taskId="{{ task['id'] }}">
                         <i class="bi bi-plus-circle add-observe"></i>
                         <label>Observation</label>
                     </span>                    
                 </div>
-                <!-- <div>
-                    <label>updated:</label> <span>
-                           {{ task_list[i]["meta"].lastUpdated }}                           
-                    </span>
-                </div> -->
-
             </div>
         </div>
         <div>
-            {% for j in range(0,task_list[i]["identifier"]|length) %}
-            {% if task_list[i]["identifier"][j]["system"] == "taskName" %}
-            <span class="task-title">{{ task_list[i]["identifier"][j]["value"]}}</span>
-            {% endif %}
+            {% for identifier in task["identifier"] %}
+                {% if identifier["system"] == "taskName" %}
+                    <span class="task-title">{{ identifier["value"] }}</span>
+                {% endif %}
             {% endfor %}
         </div>
-
     </div>
     {% endfor %}
 </div>
+
 <div class="modal-wrapper">
     <div class="close">
         <i class="bi bi-x-lg"></i>
@@ -99,6 +85,7 @@
                         name="observationCode" required>
                         <option value="">- Select an observation type -</option>
                         <option value="11331-6" data-type="quantity">Soberity value</option>
+                        <option value="8480-6" data-type="quantity">Blood Pressure</option>
                         <option value="8310-5" data-type="quantity">Temperature</option>
                         <option value="9279-1" data-type="quantity">Respiratory Rate</option>
                         <option value="8867-4" data-type="quantity">Heart Rate</option>
@@ -106,6 +93,10 @@
                         <option value="29252-4" data-type="string">CT Scan</option>
                         <option value="24629-8" data-type="string">MRI Scan</option>
                     </select>
+                </div>
+                <div class="observation-details" id="observationDetails">
+                    <p>Observation Value: <span></span></p>
+                    <p>Last Updated: <span></span></p>
                 </div>
             </div>
             <div class="form-item">
@@ -121,46 +112,142 @@
                 <button type="submit" id="btnSubmitObservation" class="btn btn-primary btn-md">Submit</button>
                 <input type="hidden" value="{{ patId }}" name="patientId" />
                 <input type="hidden" id="hidValueType" value="" name="obervationValueType" />
-                
+            
             </div>
         </form>
     </div>
 </div>
 <script>
-    $(function () {        
-        var currentTaskId = 0;
-        $(".task-info .observation-opener span").click(function () {
-            currentTaskId = $(this).attr("data-taskId");
-            var action = '/workflow/' + {{ id }} + '/' + currentTaskId + '/observe';
-            $("#frmObservation").attr("action",action);
-            $(".modal-wrapper").fadeIn();
-        });
-        $(".modal-wrapper .close").click(function () {
-            $(".modal-wrapper").fadeOut();
-        });       
-
-      var observeDone = getUrlVars()["observeDone"];
-      if(observeDone == "True")
-      {        
-        $(".alert").slideToggle();
-        hideAlert();
-      }    
-      else if(observeDone!== undefined)
-        alert("Adding observation failed!");
-
-        function hideAlert(){
+    document.addEventListener('DOMContentLoaded', function () {
+        const workflowId = '{{ id }}';
+        const patientId = '{{ patId }}';
+        const observationCodeSelect = document.getElementById('observationCode');
+        const observationValueInput = document.getElementById('observationValue');
+        const modalWrapper = document.querySelector('.modal-wrapper');
+        const alertBox = document.querySelector('.alert');
+        
+        // Function to hide alert box after 3 seconds
+        function hideAlert() {
             setTimeout(() => {
-            $(".alert").slideToggle()
-        }, 3000);
+                if (alertBox) {
+                    alertBox.style.display = 'none';
+                }
+            }, 3000);
         }
 
-        $('#observationCode').change(()=>{
+        // Initialize event listeners
+        function init() {
+            document.querySelectorAll('.task-info .observation-opener span').forEach(span => {
+                span.addEventListener('click', function () {
+                    const taskId = this.getAttribute('data-taskId');
+                    const action = `/workflow/${workflowId}/${taskId}/observe`;
+                    document.getElementById('frmObservation').setAttribute('action', action);
+                    modalWrapper.style.display = 'block';
+                });
+            });
+
+            modalWrapper.querySelector('.close').addEventListener('click', function () {
+                modalWrapper.style.display = 'none';
+            });
+
+            observationCodeSelect.addEventListener('change', function () {
             var dataType = $('#observationCode :selected').attr('data-type');
             $('#hidValueType').val(dataType);
-        });       
+                const observationCode = this.value;
+                if (observationCode) {
+                    fetchObservationDetails(observationCode, patientId);
+                }
+            });
+        }
+
+        function fetchObservationDetails(code, patientId) {
+            fetch(`/get-observation/${patientId}/${code}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('observationDetails').innerHTML = `Observation Value: ${data.observationValue}, Last Updated: ${data.lastUpdated}`;
+                        observationValueInput.value = data.observationValue;
+                    } else {
+                        document.getElementById('observationDetails').textContent = 'No observation added yet';
+                        observationValueInput.value = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching observation:', error);
+                    document.getElementById('observationDetails').textContent = 'Failed to fetch observation details';
+                });
+        }
+
+        // Check URL parameters for "observeDone" and show/hide alert accordingly
+        const urlParams = new URLSearchParams(window.location.search);
+        const observeDone = urlParams.get('observeDone');
+        if (observeDone === 'True') {
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                hideAlert();
+            }
+        } else if (observeDone !== null) {
+            alert('Adding observation failed!');
+        }
+
+        init();
     });
 
-   
+    // $(function () {        
+    //     var currentTaskId = 0;
+    //     $(".task-info .observation-opener span").click(function () {
+    //         currentTaskId = $(this).attr("data-taskId");
+    //         var action = '/workflow/' + {{ id }} + '/' + currentTaskId + '/observe';
+    //         $("#frmObservation").attr("action",action);
+    //         $(".modal-wrapper").fadeIn();
+    //     });
+    //     $(".modal-wrapper .close").click(function () {
+    //         $(".modal-wrapper").fadeOut();
+    //     });       
+
+    //   var observeDone = getUrlVars()["observeDone"];
+    //   if(observeDone == "True")
+    //   {        
+    //     $(".alert").slideToggle();
+    //     hideAlert();
+    //   }    
+    //   else if(observeDone!== undefined)
+    //     alert("Adding observation failed!");
+    //     function hideAlert(){
+    //         setTimeout(() => {
+    //         $(".alert").slideToggle()
+    //     }, 3000);
+    //     }
+
+    //     // $('#observationCode').change(()=>{
+    //     //     var dataType = $('#observationCode :selected').attr('data-type');
+    //     //     $('#hidValueType').val(dataType);
+    //     // });   
+    //     $('#observationCode').change(function() {
+    //     var observationCode = $(this).val();
+    //     var patientId = '{{ patId }}'; 
+    //     if(observationCode) {
+    //             fetch(`/get-observation/${patientId}/${observationCode}`)
+    //                 .then(response => response.json())
+    //                 .then(data => {
+    //                     if(data.success) {
+    //                         $('#observationDetails').html(`Observation Value: ${data.observationValue}, Last Updated: ${data.lastUpdated}`);
+    //                         $('#observationValue').val(data.observationValue);
+    //                     } else {
+    //                         $('#observationDetails').html('No observation added yet');
+    //                         $('#observationValue').val('');
+    //                     }
+    //                 }).catch(error => {
+    //                     console.error('Error fetching observation:', error);
+    //                 });
+    //         }
+    //     });    
+    // });
 </script>
 
 {% endblock %}

@@ -1,0 +1,7 @@
+bqplot
+ipywidgets
+jupyter
+matplotlib
+numpy
+pandas
+six
