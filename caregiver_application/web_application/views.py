@@ -106,8 +106,6 @@ def get_observation(patient_id, observation_code):
     # print("Observations: ", observations)
     if observations:
         most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime'), reverse=True)[0]      
-        # most_recent = sorted(observations, key=lambda obs: parser.parse(obs.get('effectiveDateTime')), reverse=True)[0]      
-        # most_recent = sorted(observations, key=lambda obs: obs.get('meta', {}).get('lastUpdated'), reverse=True)[0]
         if 'valueQuantity' in most_recent:
             observation_value = most_recent['valueQuantity'].get('value', 'N/A')
         elif 'valueString' in most_recent:

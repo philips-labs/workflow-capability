@@ -192,7 +192,6 @@
             } else if (difference < 86400) { // 24 hours
                 return `${Math.floor(difference / 3600)} hours ago`;
             } else {
-                // For differences more than a day, you might want to show a specific date format
                 const options = { year: 'numeric', month: 'short', day: 'numeric' };
                 return new Date(lastUpdatedTimestamp).toLocaleDateString(undefined, options);
             }
