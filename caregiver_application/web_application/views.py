@@ -105,7 +105,9 @@ def get_observation(patient_id, observation_code):
     observations = cdr.get_observations_for_patient_and_code(patient_id, observation_code)
     # print("Observations: ", observations)
     if observations:
-        most_recent = sorted(observations, key=lambda obs: obs.get('meta', {}).get('lastUpdated'), reverse=True)[0]
+        most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime'), reverse=True)[0]      
+        # most_recent = sorted(observations, key=lambda obs: parser.parse(obs.get('effectiveDateTime')), reverse=True)[0]      
+        # most_recent = sorted(observations, key=lambda obs: obs.get('meta', {}).get('lastUpdated'), reverse=True)[0]
         if 'valueQuantity' in most_recent:
             observation_value = most_recent['valueQuantity'].get('value', 'N/A')
         elif 'valueString' in most_recent:
@@ -114,7 +116,7 @@ def get_observation(patient_id, observation_code):
             observation_value = most_recent['valueCodeableConcept']['coding'][0].get('code', 'N/A') 
         else:
             observation_value = 'Unsupported observation value type'
-        last_updated = most_recent.get('meta', {}).get('lastUpdated', 'N/A')
+        last_updated = most_recent.get('effectiveDateTime')
         return jsonify(success=True, observationValue=observation_value, lastUpdated=last_updated)
     else:
         return jsonify(success=False)

@@ -22,7 +22,7 @@ cd <repository-folder>
 
 Build the Docker Image
 To build the Docker image for the project, navigate to the directory containing the Dockerfile and run:
-
+This repository is based on version:  kitware/pulse:4.1.0
 
 docker build -t ppe_fhir .
 Run the Docker Container
@@ -47,6 +47,7 @@ The FHIR server is configured with the following URL:
 FHIR_SERVER_URL = "http://host.docker.internal:8180/fhir"
 Use http://host.docker.internal:8180/fhir instead of http://localhost:8180/fhir or http://127.0.0.1:8180/fhir
 ```
+- But why http://host.docker.internal:8180/fhir ?
 #### Problem: Network Boundaries
 - Container Isolation: The FHIR server inside the Docker container has its own network environment. localhost or 127.0.0.1 for the notebook application refers to your host machine, not the container.
 

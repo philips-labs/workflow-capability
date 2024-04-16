@@ -2,17 +2,17 @@
 {% block title %} Current Workflow {% endblock %}
 
 {% block content %}
-<div> 
+<div>
     <span>Tasks running for workflow:</span>
-    <span><b> {{ workflowName }} </b></span>   
+    <span><b> {{ workflowName }} </b></span>
 </div>
 
 
 <div class="alert alert-success" role="alert">
     Successfully added observation.
-  </div>
+</div>
 
-<div> 
+<div>
     <span>Patient:</span>
     <span>
         <b><a style="color:#000000" href=/patient/{{ patId }}>{{ name }}</a></b>
@@ -20,16 +20,16 @@
 </div>
 <hr />
 
-<div class="refresh-wrapper" >
+<div class="refresh-wrapper">
     {% if (status != "completed") %}
     <button onclick="window.location.href='/workflow/' + {{ id }};" type="button" class="btn btn-dark">Refresh
         Tasks</button>
-        {% else %}
-        <div class="plan-completed">
-            <i class="bi bi-check"></i>
-            <span>Care plan completed!</span>
-        </div>
-        {% endif %}
+    {% else %}
+    <div class="plan-completed">
+        <i class="bi bi-check"></i>
+        <span>Care plan completed!</span>
+    </div>
+    {% endif %}
 </div>
 
 <div class="alert-warning p-2" role="alert">
@@ -49,20 +49,20 @@
             <div class="task-info">
                 <div>
                     <label><b>Instructions:</b></label> <span>{{ task["description"] }}</span>
-                </div>               
+                </div>
                 <div class="observation-opener">
                     <span data-taskId="{{ task['id'] }}">
                         <i class="bi bi-plus-circle add-observe"></i>
                         <label>Observation</label>
-                    </span>                    
+                    </span>
                 </div>
             </div>
         </div>
         <div>
             {% for identifier in task["identifier"] %}
-                {% if identifier["system"] == "taskName" %}
-                    <span class="task-title">{{ identifier["value"] }}</span>
-                {% endif %}
+            {% if identifier["system"] == "taskName" %}
+            <span class="task-title">{{ identifier["value"] }}</span>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
@@ -74,14 +74,14 @@
         <i class="bi bi-x-lg"></i>
     </div>
     <div class="dialog">
-        
+
         <form id="frmObservation" action="'/workflow/' + {{ id }} + '/' + taskId + '/' + '/observe'" method="POST">
             <div class="form-item">
                 <div class="">
                     <label for="observationType">Observation Type:</label>
                 </div>
                 <div class="">
-                    <select class="form-control" id="observationCode" placeholder="Observation Type" 
+                    <select class="form-control" id="observationCode" placeholder="Observation Type"
                         name="observationCode" required>
                         <option value="">- Select an observation type -</option>
                         <option value="11331-6" data-type="quantity">Soberity value</option>
@@ -112,7 +112,7 @@
                 <button type="submit" id="btnSubmitObservation" class="btn btn-primary btn-md">Submit</button>
                 <input type="hidden" value="{{ patId }}" name="patientId" />
                 <input type="hidden" id="hidValueType" value="" name="obervationValueType" />
-            
+
             </div>
         </form>
     </div>
@@ -125,7 +125,7 @@
         const observationValueInput = document.getElementById('observationValue');
         const modalWrapper = document.querySelector('.modal-wrapper');
         const alertBox = document.querySelector('.alert');
-        
+
         // Function to hide alert box after 3 seconds
         function hideAlert() {
             setTimeout(() => {
@@ -151,8 +151,8 @@
             });
 
             observationCodeSelect.addEventListener('change', function () {
-            var dataType = $('#observationCode :selected').attr('data-type');
-            $('#hidValueType').val(dataType);
+                var dataType = $('#observationCode :selected').attr('data-type');
+                $('#hidValueType').val(dataType);
                 const observationCode = this.value;
                 if (observationCode) {
                     fetchObservationDetails(observationCode, patientId);
@@ -170,7 +170,7 @@
                 })
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('observationDetails').innerHTML = `Observation Value: ${data.observationValue}, Last Updated: ${data.lastUpdated}`;
+                        document.getElementById('observationDetails').innerHTML = `Observation Value: ${data.observationValue}, Last Updated: ${formatTimeAgo(data.lastUpdated)}`;
                         observationValueInput.value = data.observationValue;
                     } else {
                         document.getElementById('observationDetails').textContent = 'No observation added yet';
@@ -181,6 +181,21 @@
                     console.error('Error fetching observation:', error);
                     document.getElementById('observationDetails').textContent = 'Failed to fetch observation details';
                 });
+        }
+        function formatTimeAgo(lastUpdatedTimestamp) {
+            const now = Date.now();
+            const difference = (now - new Date(lastUpdatedTimestamp).getTime()) / 1000; // Difference in seconds
+            if (difference < 60) {
+                return `${Math.floor(difference)} seconds ago`;
+            } else if (difference < 3600) { // 60 minutes
+                return `${Math.floor(difference / 60)} minutes ago`;
+            } else if (difference < 86400) { // 24 hours
+                return `${Math.floor(difference / 3600)} hours ago`;
+            } else {
+                // For differences more than a day, you might want to show a specific date format
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return new Date(lastUpdatedTimestamp).toLocaleDateString(undefined, options);
+            }
         }
 
         // Check URL parameters for "observeDone" and show/hide alert accordingly
@@ -208,14 +223,14 @@
     //     });
     //     $(".modal-wrapper .close").click(function () {
     //         $(".modal-wrapper").fadeOut();
-    //     });       
+    //     });
 
     //   var observeDone = getUrlVars()["observeDone"];
     //   if(observeDone == "True")
-    //   {        
+    //   {
     //     $(".alert").slideToggle();
     //     hideAlert();
-    //   }    
+    //   }
     //   else if(observeDone!== undefined)
     //     alert("Adding observation failed!");
     //     function hideAlert(){
@@ -227,10 +242,10 @@
     //     // $('#observationCode').change(()=>{
     //     //     var dataType = $('#observationCode :selected').attr('data-type');
     //     //     $('#hidValueType').val(dataType);
-    //     // });   
+    //     // });
     //     $('#observationCode').change(function() {
     //     var observationCode = $(this).val();
-    //     var patientId = '{{ patId }}'; 
+    //     var patientId = '{{ patId }}';
     //     if(observationCode) {
     //             fetch(`/get-observation/${patientId}/${observationCode}`)
     //                 .then(response => response.json())
@@ -246,7 +261,7 @@
     //                     console.error('Error fetching observation:', error);
     //                 });
     //         }
-    //     });    
+    //     });
     // });
 </script>
 
