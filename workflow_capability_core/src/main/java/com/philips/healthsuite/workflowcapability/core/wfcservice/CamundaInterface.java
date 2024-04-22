@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-
 public class CamundaInterface implements EngineInterface {
 
     Properties properties;
@@ -41,30 +40,24 @@ public class CamundaInterface implements EngineInterface {
                 .body(jsonNode)
                 .asJson();
         if (httpResponse.getBody().getObject().isNull("id")) {
-            System.out.println(" the error log is for  no id ==>");
             return null;
         }
-        System.out.println(" the response log is ==>  " +  httpResponse.getBody().getObject().get("id"));
         return (String) httpResponse.getBody().getObject().get("id");
     }
 
     @Override
     public String deployModel(File bpmnFile, String deploymentName) {
         HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl + "/engine-rest/deployment/create")
-        // HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl + "/engine-rest/deployment/create")
                 .field("deployment-name", deploymentName)
                 .field("enable-duplicate-filtering", "false")
                 .field("deploy-changed-only", "false")
                 .field("*", bpmnFile)
                 .asJson();
         if (httpResponse.getStatus() != 200) {
-            System.out.println(" the error log is ==>  " +  httpResponse.getStatus()+ " file is " + deploymentName+" ==>");
             return null;
         }
         return "ok";
     }
-
-    //completeTask is not used in the current version of the code base......
 
     @Override
     public String completeTask(String taskID) {
@@ -72,8 +65,6 @@ public class CamundaInterface implements EngineInterface {
                         "/engine-rest/task/" + taskID + "/complete")
                 .header("Content-Type", "application/json")
                 .asJson();
-        System.out.println(httpResponse.getBody().toString());// this is just for debugging purposes 
-
         // I suppose httpResponse contains the response from Camunda after telling it to complete a task. Maybe we can use it
         return "ok";
     }
@@ -99,7 +90,5 @@ public class CamundaInterface implements EngineInterface {
                 .asJson();
 
     }
-    // I suppose httpResponse contains the response from Camunda after telling it to send a message. Maybe we can use it
-    
 
 }

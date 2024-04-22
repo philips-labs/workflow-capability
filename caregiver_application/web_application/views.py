@@ -1,3 +1,4 @@
+from datetime import datetime
 from pickle import TRUE
 import flask
 import requests
@@ -6,6 +7,7 @@ import service_config as cfg
 from flask import Blueprint, render_template, request, redirect
 from cdr.cdr_fhir import Cdr
 from flask import jsonify
+
 cdr = Cdr("http://127.0.0.1:8180/fhir", {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -17,6 +19,7 @@ views = Blueprint('views', __name__)
 @views.route('/')
 def home():
     return render_template("home.html")
+
 
 @views.route('/register-new-patient', methods=['POST', 'GET'])
 def register_new_patient():
@@ -50,6 +53,7 @@ def patients():
     patientList = cdr.get_patients()
     return render_template("patients.html", patient_list=patientList, len=len(patientList))
 
+
 @views.route("/patient/<id>", methods=['GET','POST'])
 def patient(id):
     if flask.request.method == 'GET':        
@@ -59,7 +63,7 @@ def patient(id):
             all_plan_defs = cdr.get_plan_definitions()
             if "name" in current_patient:
                 name = current_patient["name"][0]["given"][0] + " " + current_patient["name"][0]["family"]
-            # print("all_plan_defs",all_plan_defs)
+            print("all_plan_defs",all_plan_defs)
             return render_template("patient.html", patid=current_patient["id"], name=name, care_plan_list=care_plan_list,
                             len=len(care_plan_list), all_plan_defs=all_plan_defs, all_len=len(all_plan_defs))
     if flask.request.method == 'POST':
@@ -68,44 +72,13 @@ def patient(id):
             print("patient: ",request.form['patient'])
             return redirect('/patient/'+id)
 
-
-@views.route("/workflow/<id>")
-def workflow(id):
-    care_plan = cdr.get_care_plan(id)   
-    workflowName=""      
-    task_list = []
-    if care_plan is None:
-        return patients()
-    print("care_plan: ",care_plan)
-    if "activity" in care_plan:
-        #workflowName = care_plan["meta"].identifier[0].value
-        workflowName = care_plan["identifier"][0]["value"]
-        for activity in care_plan["activity"]:
-            print(activity["reference"]["reference"])
-            task = cdr.get_resource(activity["reference"]["reference"])
-            print("task: ",task)
-            task_list.append(task)
-    
-    patId=care_plan["subject"]["reference"].split("/",1)[1]
-
-    current_patient = cdr.get_patient(patId)
-    name = ""    
-    if "name" in current_patient:
-        name = current_patient["name"][0]["given"][0] + " " + current_patient["name"][0]["family"]
-    return render_template("workflow.html", id=id, task_list=task_list, len=len(task_list),workflowName=workflowName, status=care_plan["status"], name=name, patId=patId)
-
-@views.route("/workflow/<id>/<taskid>/done")
-def task_done(id, taskid):
-    cdr.set_task_to_done(taskid)
-    return redirect('/workflow/'+id)
-
 # get-observation added in a way that we wanted to fetch the observation value for a patient and observation code 
 @views.route('/get-observation/<patient_id>/<observation_code>')
 def get_observation(patient_id, observation_code):
     observations = cdr.get_observations_for_patient_and_code(patient_id, observation_code)
-    # print("Observations: ", observations)
     if observations:
-        most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime'), reverse=True)[0]      
+        most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime') or datetime.min, reverse=True)[0]
+        # most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime'), reverse=True)[0]      
         if 'valueQuantity' in most_recent:
             observation_value = most_recent['valueQuantity'].get('value', 'N/A')
         elif 'valueString' in most_recent:
@@ -119,6 +92,36 @@ def get_observation(patient_id, observation_code):
     else:
         return jsonify(success=False)
     
+@views.route("/workflow/<id>")
+def workflow(id):
+    care_plan = cdr.get_care_plan(id)   
+    workflowName=""      
+    task_list = []
+    if care_plan is None:
+        return patients()
+    if "activity" in care_plan:
+        #workflowName = care_plan["meta"].identifier[0].value
+        workflowName = care_plan["identifier"][0]["value"]
+        for activity in care_plan["activity"]:
+            print(activity["reference"]["reference"])
+            task = cdr.get_resource(activity["reference"]["reference"])
+            task_list.append(task)
+    
+    patId=care_plan["subject"]["reference"].split("/",1)[1]
+
+    current_patient = cdr.get_patient(patId)
+    name = ""    
+    if "name" in current_patient:
+        name = current_patient["name"][0]["given"][0] + " " + current_patient["name"][0]["family"]
+
+    return render_template("workflow.html", id=id, task_list=task_list, len=len(task_list),workflowName=workflowName, status=care_plan["status"], name=name, patId=patId)
+
+
+@views.route("/workflow/<id>/<taskid>/done")
+def task_done(id, taskid):
+    cdr.set_task_to_done(taskid)
+    return redirect('/workflow/'+id)
+
 @views.route("/workflow/<id>/<taskid>/observe", methods=['POST'])
 def observation_add(id, taskid):
     observationCode = request.form['observationCode']
@@ -136,7 +139,6 @@ def observation_add(id, taskid):
         observeDone = True
     else :
         observeDone = False
-    
     return redirect('/workflow/'+id+'?observeDone=' + str(observeDone) + '&taskid=' + str(taskid))
 
 

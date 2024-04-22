@@ -2,17 +2,18 @@
 {% block title %} Current Workflow {% endblock %}
 
 {% block content %}
-<div>
+<div> 
     <span>Tasks running for workflow:</span>
-    <span><b> {{ workflowName }} </b></span>
+    <span><b> {{ workflowName }} </b></span>   
 </div>
 
 
 <div class="alert alert-success" role="alert">
     Successfully added observation.
-</div>
+  </div>
 
-<div>
+
+<div> 
     <span>Patient:</span>
     <span>
         <b><a style="color:#000000" href=/patient/{{ patId }}>{{ name }}</a></b>
@@ -20,16 +21,16 @@
 </div>
 <hr />
 
-<div class="refresh-wrapper">
+<div class="refresh-wrapper" >
     {% if (status != "completed") %}
     <button onclick="window.location.href='/workflow/' + {{ id }};" type="button" class="btn btn-dark">Refresh
         Tasks</button>
-    {% else %}
-    <div class="plan-completed">
-        <i class="bi bi-check"></i>
-        <span>Care plan completed!</span>
-    </div>
-    {% endif %}
+        {% else %}
+        <div class="plan-completed">
+            <i class="bi bi-check"></i>
+            <span>Care plan completed!</span>
+        </div>
+        {% endif %}
 </div>
 
 <div class="alert-warning p-2" role="alert">
@@ -38,54 +39,66 @@
 
 <br />
 <div class="workflow-wrapper">
-    {% for task in task_list %}
+    {% for i in range(0,len) %}
 
     <div class="task-wrapper">
         <div class="task-line"></div>
-        <div class="{{ 'task-icon task-running' if task['status'] == 'received' else 'task-icon task-success' }}">
-            <span onclick="window.location.href='/workflow/{{ id }}/{{ task['id'] }}/done';">
-                <i class="bi {{ 'bi-plus-circle' if task['status'] == 'received' else 'bi-check' }}"></i>
+        <div {% if task_list[i]['status']=='received' %} class="task-icon task-running" {% else %}
+            class="task-icon task-success" {% endif %}>
+
+            <span onclick="window.location.href='/workflow/' + {{ id }} + '/' + {{ task_list[i]["id"] }} + '/done' ;">
+                {% if task_list[i]['status'] == 'received' %}
+                <i class="bi bi-plus-circle"></i>
+                {% else %}
+                <i class="bi bi-check"></i>
+                {% endif %}
             </span>
+
             <div class="task-info">
                 <div>
-                    <label><b>Instructions:</b></label> <span>{{ task["description"] }}</span>
-                </div>
-                <div class="observation-opener">
-                    <span data-taskId="{{ task['id'] }}">
+                    <label><b>Instructions:</b></label> <span>{{ task_list[i]["description"] }}</span>
+                </div>               
+                <div class="observation-opener" >
+                    <span data-taskId={{ task_list[i]["id"] }}>
                         <i class="bi bi-plus-circle add-observe"></i>
                         <label>Observation</label>
-                    </span>
+                    </span>                    
                 </div>
+                <!-- <div>
+                    <label>updated:</label> <span>
+                           {{ task_list[i]["meta"].lastUpdated }}                           
+                    </span>
+                </div> -->
+
             </div>
         </div>
         <div>
-            {% for identifier in task["identifier"] %}
-            {% if identifier["system"] == "taskName" %}
-            <span class="task-title">{{ identifier["value"] }}</span>
+            {% for j in range(0,task_list[i]["identifier"]|length) %}
+            {% if task_list[i]["identifier"][j]["system"] == "taskName" %}
+            <span class="task-title">{{ task_list[i]["identifier"][j]["value"]}}</span>
             {% endif %}
             {% endfor %}
         </div>
+
     </div>
     {% endfor %}
 </div>
-
 <div class="modal-wrapper">
     <div class="close">
         <i class="bi bi-x-lg"></i>
     </div>
     <div class="dialog">
-
+        
         <form id="frmObservation" action="'/workflow/' + {{ id }} + '/' + taskId + '/' + '/observe'" method="POST">
             <div class="form-item">
                 <div class="">
                     <label for="observationType">Observation Type:</label>
                 </div>
                 <div class="">
-                    <select class="form-control" id="observationCode" placeholder="Observation Type"
+                    <select class="form-control" id="observationCode" placeholder="Observation Type" 
                         name="observationCode" required>
                         <option value="">- Select an observation type -</option>
                         <option value="11331-6" data-type="quantity">Soberity value</option>
-                        <option value="8480-6" data-type="quantity">Blood Pressure</option>
                         <option value="8310-5" data-type="quantity">Temperature</option>
                         <option value="9279-1" data-type="quantity">Respiratory Rate</option>
                         <option value="8867-4" data-type="quantity">Heart Rate</option>
@@ -95,8 +108,6 @@
                     </select>
                 </div>
                 <div class="observation-details" id="observationDetails">
-                    <p>Observation Value: <span></span></p>
-                    <p>Last Updated: <span></span></p>
                 </div>
             </div>
             <div class="form-item">
@@ -112,156 +123,84 @@
                 <button type="submit" id="btnSubmitObservation" class="btn btn-primary btn-md">Submit</button>
                 <input type="hidden" value="{{ patId }}" name="patientId" />
                 <input type="hidden" id="hidValueType" value="" name="obervationValueType" />
-
+                
             </div>
         </form>
     </div>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const workflowId = '{{ id }}';
-        const patientId = '{{ patId }}';
-        const observationCodeSelect = document.getElementById('observationCode');
-        const observationValueInput = document.getElementById('observationValue');
-        const modalWrapper = document.querySelector('.modal-wrapper');
-        const alertBox = document.querySelector('.alert');
+    $(function () {        
+        var currentTaskId = 0;
+        $(".task-info .observation-opener span").click(function () {
+            currentTaskId = $(this).attr("data-taskId");
+            var action = '/workflow/' + {{ id }} + '/' + currentTaskId + '/observe';
+            $("#frmObservation").attr("action",action);
+            $(".modal-wrapper").fadeIn();
+        });
+        $(".modal-wrapper .close").click(function () {
+            $(".modal-wrapper").fadeOut();
+        });       
 
-        // Function to hide alert box after 3 seconds
-        function hideAlert() {
+      var observeDone = getUrlVars()["observeDone"];
+      if(observeDone == "True")
+      {        
+        $(".alert").slideToggle();
+        hideAlert();
+      }    
+      else if(observeDone!== undefined)
+        alert("Adding observation failed!");
+
+        function hideAlert(){
             setTimeout(() => {
-                if (alertBox) {
-                    alertBox.style.display = 'none';
-                }
-            }, 3000);
+            $(".alert").slideToggle()
+        }, 3000);
         }
 
-        // Initialize event listeners
-        function init() {
-            document.querySelectorAll('.task-info .observation-opener span').forEach(span => {
-                span.addEventListener('click', function () {
-                    const taskId = this.getAttribute('data-taskId');
-                    const action = `/workflow/${workflowId}/${taskId}/observe`;
-                    document.getElementById('frmObservation').setAttribute('action', action);
-                    modalWrapper.style.display = 'block';
-                });
-            });
-
-            modalWrapper.querySelector('.close').addEventListener('click', function () {
-                modalWrapper.style.display = 'none';
-            });
-
-            observationCodeSelect.addEventListener('change', function () {
-                var dataType = $('#observationCode :selected').attr('data-type');
-                $('#hidValueType').val(dataType);
-                const observationCode = this.value;
-                if (observationCode) {
-                    fetchObservationDetails(observationCode, patientId);
-                }
-            });
-        }
-
-        function fetchObservationDetails(code, patientId) {
-            fetch(`/get-observation/${patientId}/${code}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
+        // $('#observationCode').change(()=>{
+        //     var dataType = $('#observationCode :selected').attr('data-type');
+        //     $('#hidValueType').val(dataType);
+        // });
+        
+        
+ $('#observationCode').change(function () {
+        var dataType = $('#observationCode :selected').attr('data-type');
+        $('#hidValueType').val(dataType);
+        var observationCode = $(this).val();
+        var patientId = '{{ patId }}';
+        if (observationCode) {
+            fetch(`/get-observation/${patientId}/${observationCode}`)
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('observationDetails').innerHTML = `Observation Value: ${data.observationValue}, Last Updated: ${formatTimeAgo(data.lastUpdated)}`;
-                        observationValueInput.value = data.observationValue;
+                        var formatTimeAgo = null
+                        const now = Date.now();
+                        const difference = (now - new Date(data.lastUpdated).getTime()) / 1000;
+                        if (difference < 60) {
+                            formatTimeAgo = `${Math.floor(difference)} seconds ago`;
+                        } else if (difference < 3600) { // 60 minutes
+                            formatTimeAgo = `${Math.floor(difference / 60)} minutes ago`;
+                        } else if (difference < 86400) { // 24 hours
+                            formatTimeAgo = `${Math.floor(difference / 3600)} hours ago`;
+                        } else {
+                            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                            formatTimeAgo = new Date(data.lastUpdated).toLocaleDateString(undefined, options);
+                        }
+                        document.getElementById('observationDetails').innerHTML = `Observation Value: ${data.observationValue}, Value Entered  : ${formatTimeAgo}`;
+                        $('#observationDetails').html(`Observation Value: ${data.observationValue}, Value Entered: ${formatTimeAgo}`);
+                        $('#observationValue').val(data.observationValue);
                     } else {
-                        document.getElementById('observationDetails').textContent = 'No observation added yet';
-                        observationValueInput.value = '';
+                        $('#observationDetails').html('No observation added yet');
+                        $('#observationValue').val('');
                     }
-                })
-                .catch(error => {
+                }).catch(error => {
                     console.error('Error fetching observation:', error);
-                    document.getElementById('observationDetails').textContent = 'Failed to fetch observation details';
                 });
         }
-        function formatTimeAgo(lastUpdatedTimestamp) {
-            const now = Date.now();
-            const difference = (now - new Date(lastUpdatedTimestamp).getTime()) / 1000; // Difference in seconds
-            if (difference < 60) {
-                return `${Math.floor(difference)} seconds ago`;
-            } else if (difference < 3600) { // 60 minutes
-                return `${Math.floor(difference / 60)} minutes ago`;
-            } else if (difference < 86400) { // 24 hours
-                return `${Math.floor(difference / 3600)} hours ago`;
-            } else {
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return new Date(lastUpdatedTimestamp).toLocaleDateString(undefined, options);
-            }
-        }
-
-        // Check URL parameters for "observeDone" and show/hide alert accordingly
-        const urlParams = new URLSearchParams(window.location.search);
-        const observeDone = urlParams.get('observeDone');
-        if (observeDone === 'True') {
-            if (alertBox) {
-                alertBox.style.display = 'block';
-                hideAlert();
-            }
-        } else if (observeDone !== null) {
-            alert('Adding observation failed!');
-        }
-
-        init();
     });
 
-    // $(function () {        
-    //     var currentTaskId = 0;
-    //     $(".task-info .observation-opener span").click(function () {
-    //         currentTaskId = $(this).attr("data-taskId");
-    //         var action = '/workflow/' + {{ id }} + '/' + currentTaskId + '/observe';
-    //         $("#frmObservation").attr("action",action);
-    //         $(".modal-wrapper").fadeIn();
-    //     });
-    //     $(".modal-wrapper .close").click(function () {
-    //         $(".modal-wrapper").fadeOut();
-    //     });
+    });
 
-    //   var observeDone = getUrlVars()["observeDone"];
-    //   if(observeDone == "True")
-    //   {
-    //     $(".alert").slideToggle();
-    //     hideAlert();
-    //   }
-    //   else if(observeDone!== undefined)
-    //     alert("Adding observation failed!");
-    //     function hideAlert(){
-    //         setTimeout(() => {
-    //         $(".alert").slideToggle()
-    //     }, 3000);
-    //     }
-
-    //     // $('#observationCode').change(()=>{
-    //     //     var dataType = $('#observationCode :selected').attr('data-type');
-    //     //     $('#hidValueType').val(dataType);
-    //     // });
-    //     $('#observationCode').change(function() {
-    //     var observationCode = $(this).val();
-    //     var patientId = '{{ patId }}';
-    //     if(observationCode) {
-    //             fetch(`/get-observation/${patientId}/${observationCode}`)
-    //                 .then(response => response.json())
-    //                 .then(data => {
-    //                     if(data.success) {
-    //                         $('#observationDetails').html(`Observation Value: ${data.observationValue}, Last Updated: ${data.lastUpdated}`);
-    //                         $('#observationValue').val(data.observationValue);
-    //                     } else {
-    //                         $('#observationDetails').html('No observation added yet');
-    //                         $('#observationValue').val('');
-    //                     }
-    //                 }).catch(error => {
-    //                     console.error('Error fetching observation:', error);
-    //                 });
-    //         }
-    //     });
-    // });
+   
 </script>
 
 {% endblock %}

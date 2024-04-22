@@ -1,8 +1,8 @@
-# Physiological Model Software (PMS) with FHIR Integration
+# Physiological Model Software-FHIR Integration
 
 ## Overview
 
-The Physiological Model Software (PMS) is a Jupyter Notebook application that leverages the Pulse Physiology Engine to simulate physiological scenarios. The system integrates with a Fast Healthcare Interoperability Resources (FHIR) server to manage the observations recorded during simulations.
+The Physiological Model Software-FHIR Integration is a Jupyter Notebook application that leverages the Pulse Physiology Engine to simulate physiological scenarios. The system integrates with a Fast Healthcare Interoperability Resources (FHIR) server to manage the observations recorded during simulations.
 
 ## Prerequisites
 
@@ -76,3 +76,7 @@ Use http://host.docker.internal:8180/fhir instead of http://localhost:8180/fhir 
     - Ensure Docker is running on your system.
     - Verify that the FHIR server is up and accessible at the specified URL.
     - Check the Docker container logs for any error messages or indications of problems.
+
+- After running the code and entering the real patient Id, expect the initial state values registered in the FHIR server. After hitting the button Obstruct air for 20 seconds, the Fhir server will get the last available values and same is for any actions taken.
+
+- Look at the component diagram <img src="pulse-physiology_FHIR\component diagram.png"  width="600">

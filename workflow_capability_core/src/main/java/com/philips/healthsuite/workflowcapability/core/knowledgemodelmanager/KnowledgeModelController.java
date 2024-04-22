@@ -64,7 +64,7 @@ public class KnowledgeModelController {
             String fhirPlanDefinitionName = createFHIRObjects(bpmnModel);
             File modifiedFileName = addCamundaTags(bpmnModel);
             deployModel(modifiedFileName, fhirPlanDefinitionName);
-            return "Model successfully deployed in Camunda.";
+            return "Model successfully deployed";
         } catch (IOException e) {
             return e.toString();
         } catch (SAXException e) {
@@ -107,7 +107,7 @@ public class KnowledgeModelController {
 
             // Deploying model
             deployModel(newFile, newFile.getName());
-            return "Model successfully deployed in Camunda ";
+            return "Model successfully deployed";
         } catch (Exception e) {
             e.printStackTrace();
             return "Problem with deploying model";

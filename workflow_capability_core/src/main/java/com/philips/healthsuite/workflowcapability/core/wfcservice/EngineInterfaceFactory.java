@@ -8,7 +8,7 @@ public class EngineInterfaceFactory {
         if (engineType == "CAMUNDA") {
             return new CamundaInterface();
         }
-        
+
         return null;
     }
 
