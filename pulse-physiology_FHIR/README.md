@@ -79,4 +79,4 @@ Use http://host.docker.internal:8180/fhir instead of http://localhost:8180/fhir 
 
 - After running the code and entering the real patient Id, expect the initial state values registered in the FHIR server. After hitting the button Obstruct air for 20 seconds, the Fhir server will get the last available values and same is for any actions taken.
 
-- Look at the component diagram <img src="pulse-physiology_FHIR\component diagram.png"  width="600">
+- Look at the component diagram <img src="./component diagram.png" alt="Component Diagram" width="800" height="600" />

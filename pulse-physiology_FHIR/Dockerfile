@@ -4,8 +4,6 @@ FROM kitware/pulse:4.1.0
 # install some python packages
 COPY requirements.txt /tmp/
 RUN pip3 install --requirement /tmp/requirements.txt
-RUN pip install bqplot
-
 # RUN jupyter nbextension enable --py bqplot
 RUN pip install pulse
 RUN pip install fhirclient

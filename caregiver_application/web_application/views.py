@@ -63,7 +63,6 @@ def patient(id):
             all_plan_defs = cdr.get_plan_definitions()
             if "name" in current_patient:
                 name = current_patient["name"][0]["given"][0] + " " + current_patient["name"][0]["family"]
-            print("all_plan_defs",all_plan_defs)
             return render_template("patient.html", patid=current_patient["id"], name=name, care_plan_list=care_plan_list,
                             len=len(care_plan_list), all_plan_defs=all_plan_defs, all_len=len(all_plan_defs))
     if flask.request.method == 'POST':
