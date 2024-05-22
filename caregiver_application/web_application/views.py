@@ -76,8 +76,7 @@ def patient(id):
 def get_observation(patient_id, observation_code):
     observations = cdr.get_observations_for_patient_and_code(patient_id, observation_code)
     if observations:
-        most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime') or datetime.min, reverse=True)[0]
-        # most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime'), reverse=True)[0]      
+        most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime') or datetime.min, reverse=True)[0]     
         if 'valueQuantity' in most_recent:
             observation_value = most_recent['valueQuantity'].get('value', 'N/A')
         elif 'valueString' in most_recent:
@@ -99,7 +98,6 @@ def workflow(id):
     if care_plan is None:
         return patients()
     if "activity" in care_plan:
-        #workflowName = care_plan["meta"].identifier[0].value
         workflowName = care_plan["identifier"][0]["value"]
         for activity in care_plan["activity"]:
             print(activity["reference"]["reference"])

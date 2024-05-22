@@ -5,14 +5,6 @@ FROM kitware/pulse:4.1.0
 COPY requirements.txt /tmp/
 RUN pip3 install --requirement /tmp/requirements.txt
 # RUN jupyter nbextension enable --py bqplot
-RUN pip install pulse
-RUN pip install fhirclient
-RUN pip install urllib3
-RUN pip install requests
-RUN pip3 install jupyter nbconvert
-
-#added new extensions for deployment in jupyter and
-RUN pip install nbconvert
 
 ################################################################################
 # set up user
