@@ -1,3 +1,4 @@
+from datetime import datetime
 from pickle import TRUE
 import flask
 import requests
@@ -5,6 +6,7 @@ import pathlib
 import service_config as cfg
 from flask import Blueprint, render_template, request, redirect
 from cdr.cdr_fhir import Cdr
+from flask import jsonify
 
 cdr = Cdr("http://127.0.0.1:8180/fhir", {
     'Content-Type': 'application/json',
@@ -61,7 +63,6 @@ def patient(id):
             all_plan_defs = cdr.get_plan_definitions()
             if "name" in current_patient:
                 name = current_patient["name"][0]["given"][0] + " " + current_patient["name"][0]["family"]
-            print("all_plan_defs",all_plan_defs)
             return render_template("patient.html", patid=current_patient["id"], name=name, care_plan_list=care_plan_list,
                             len=len(care_plan_list), all_plan_defs=all_plan_defs, all_len=len(all_plan_defs))
     if flask.request.method == 'POST':
@@ -70,7 +71,25 @@ def patient(id):
             print("patient: ",request.form['patient'])
             return redirect('/patient/'+id)
 
-
+# get-observation added in a way that we wanted to fetch the observation value for a patient and observation code 
+@views.route('/get-observation/<patient_id>/<observation_code>')
+def get_observation(patient_id, observation_code):
+    observations = cdr.get_observations_for_patient_and_code(patient_id, observation_code)
+    if observations:
+        most_recent = sorted(observations, key=lambda obs: obs.get('effectiveDateTime') or datetime.min, reverse=True)[0]     
+        if 'valueQuantity' in most_recent:
+            observation_value = most_recent['valueQuantity'].get('value', 'N/A')
+        elif 'valueString' in most_recent:
+            observation_value = most_recent.get('valueString', 'N/A')
+        elif 'valueCodeableConcept' in most_recent:
+            observation_value = most_recent['valueCodeableConcept']['coding'][0].get('code', 'N/A') 
+        else:
+            observation_value = 'Unsupported observation value type'
+        last_updated = most_recent.get('effectiveDateTime')
+        return jsonify(success=True, observationValue=observation_value, lastUpdated=last_updated)
+    else:
+        return jsonify(success=False)
+    
 @views.route("/workflow/<id>")
 def workflow(id):
     care_plan = cdr.get_care_plan(id)   
@@ -79,7 +98,6 @@ def workflow(id):
     if care_plan is None:
         return patients()
     if "activity" in care_plan:
-        #workflowName = care_plan["meta"].identifier[0].value
         workflowName = care_plan["identifier"][0]["value"]
         for activity in care_plan["activity"]:
             print(activity["reference"]["reference"])

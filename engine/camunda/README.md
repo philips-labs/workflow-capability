@@ -10,3 +10,7 @@
 - Access Camunda web interface at: http://localhost:8080/. The login credentials are:  
 	-- *User Name:* admin  
 	-- *Password:* geheim
+# To use docker  
+- docker build -t camunda-engine .
+- docker run -p 8080:8080 camunda-engine
+- use http://host.docker.internal instead of localhost when using docker

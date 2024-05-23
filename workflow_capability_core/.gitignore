@@ -1,2 +1,7 @@
-**/target
-*.iml
+target/
+.mvn/
+.git/
+.gitignore
+.idea/
+*.class
+*.jar

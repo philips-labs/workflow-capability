@@ -1,0 +1,13 @@
+bqplot
+ipywidgets
+jupyter
+matplotlib
+numpy
+pandas
+six
+pulse
+fhirclient
+urllib3
+requests
+jupyter 
+nbconvert

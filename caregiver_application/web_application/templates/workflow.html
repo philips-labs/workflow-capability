@@ -107,6 +107,8 @@
                         <option value="24629-8" data-type="string">MRI Scan</option>
                     </select>
                 </div>
+                <div class="observation-details" id="observationDetails">
+                </div>
             </div>
             <div class="form-item">
                 <div class="">
@@ -153,11 +155,43 @@
             $(".alert").slideToggle()
         }, 3000);
         }
+        
+ $('#observationCode').change(function () {
+        var dataType = $('#observationCode :selected').attr('data-type');
+        $('#hidValueType').val(dataType);
+        var observationCode = $(this).val();
+        var patientId = '{{ patId }}';
+        if (observationCode) {
+            fetch(`/get-observation/${patientId}/${observationCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        var formatTimeAgo = null
+                        const now = Date.now();
+                        const difference = (now - new Date(data.lastUpdated).getTime()) / 1000;
+                        if (difference < 60) {
+                            formatTimeAgo = `${Math.floor(difference)} seconds ago`;
+                        } else if (difference < 3600) { // 60 minutes
+                            formatTimeAgo = `${Math.floor(difference / 60)} minutes ago`;
+                        } else if (difference < 86400) { // 24 hours
+                            formatTimeAgo = `${Math.floor(difference / 3600)} hours ago`;
+                        } else {
+                            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                            formatTimeAgo = new Date(data.lastUpdated).toLocaleDateString(undefined, options);
+                        }
+                        document.getElementById('observationDetails').innerHTML = `Observation Value: ${data.observationValue}, Value Entered  : ${formatTimeAgo}`;
+                        $('#observationDetails').html(`Observation Value: ${data.observationValue}, Value Entered: ${formatTimeAgo}`);
+                        $('#observationValue').val(data.observationValue);
+                    } else {
+                        $('#observationDetails').html('No observation added yet');
+                        $('#observationValue').val('');
+                    }
+                }).catch(error => {
+                    console.error('Error fetching observation:', error);
+                });
+        }
+    });
 
-        $('#observationCode').change(()=>{
-            var dataType = $('#observationCode :selected').attr('data-type');
-            $('#hidValueType').val(dataType);
-        });       
     });
 
    

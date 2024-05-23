@@ -293,7 +293,15 @@ class Cdr:
             return json.loads(response.text) if response else None
         except:
             return None
-
+        
+    def get_observations_for_patient_and_code(self, patient_id, observation_code):
+        query_url = f"{self.base_url}/Observation?subject=Patient/{patient_id}&code={observation_code}"
+        response = requests.get(query_url, headers=self.header)
+        if response.status_code == 200:
+            response_json = response.json()
+            if "entry" in response_json:
+                return [entry["resource"] for entry in response_json["entry"]]
+        return []
 
     def find_patient(self, patient_search_filter):
         return self.get_resource("Patient?" + patient_search_filter)
