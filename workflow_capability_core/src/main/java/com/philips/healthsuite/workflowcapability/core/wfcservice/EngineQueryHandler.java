@@ -23,20 +23,17 @@ public class EngineQueryHandler {
     HashMap<String, HashMap<String, String[]>> pendingRequests;
     Properties properties;
 
-
     public EngineQueryHandler() throws IOException {
         properties = new Properties();
-        InputStream inputStream =
-                getClass().getClassLoader().getResourceAsStream("application.properties");
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.properties");
         properties.load(inputStream);
         pendingRequests = new HashMap<>();
     }
 
-
-    public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName) {
+    public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName, String taskIdentifier) throws IOException {
         FhirContext ctx = FhirContext.forR4();
+        System.out.println("Get params: " + query + ": " + returnMessage + " : " + processID + " : " + variableName + " : " + taskIdentifier);
         try {
-
             // Extract CRUD Operator
             String[] crudOperationSplit = query.split(":");
             if (crudOperationSplit.length != 2) {
@@ -56,70 +53,99 @@ public class EngineQueryHandler {
             query = fhirResourceSplit[1];
 
             IParser parser = ctx.newJsonParser();
-
+            Resource resource = null;
             if (crudOperation.equals("FHIR(GET)")) {
-                return getFhirObject(fhirResource, query, parser);
+                resource = getFhirObject(fhirResource, query, parser);
+                if (resource != null) {
+                    return resource;
+                }
+
             }
             if (crudOperation.equals("FHIR(SUBSCRIBE)")) {
-                subscribeToFhirObject(fhirResource, query, parser, processID, returnMessage, variableName);
+                subscribeToFhirObject(fhirResource, query, parser, processID, returnMessage, variableName, taskIdentifier);
             }
+            if (crudOperation.equals("FHIR(FETCH)")) {
+                 resource = getFhirObject(fhirResource, query, parser);
+                if (resource != null) {
+                    System.out.println("Resource from fetch condition: ");
+                    return resource;
+                }
+                else
+                subscribeToFhirObject(fhirResource, query, parser, processID, returnMessage, variableName, taskIdentifier);
+            }
+
         } catch (IncorrectQueryException e) {
             System.out.println("Incorrect query, please use the format {CRUD Operation}:{FHIR Resource Type}?{FHIR Query} -> " + e);
         }
         return null;
     }
 
-
-    private void subscribeToFhirObject(String fhirResource, String query, IParser parser, String processID, String returnMessage, String variableName) {
+    private void subscribeToFhirObject(String fhirResource, String query, IParser parser, String processID,
+        String returnMessage, String variableName, String taskIdentifier) {
         if (!pendingRequests.containsKey(processID)) {
             pendingRequests.put(processID, new HashMap<>());
         }
         Subscription subscription = new Subscription();
         subscription.setStatus(Subscription.SubscriptionStatus.REQUESTED);
-        subscription.setReason("Receive Task needs FHIR Store Value");
+        subscription.setReason("Task needs FHIR Store Value");
         subscription.setCriteria(fhirResource + "?" + query);
         Subscription.SubscriptionChannelComponent hook = new Subscription.SubscriptionChannelComponent();
         hook.setType(Subscription.SubscriptionChannelType.RESTHOOK);
-        hook.setEndpoint(properties.get("config.wfcUrl") + "/OnRequestChange/" + processID + "/" + returnMessage + "/" + variableName);
+        hook.setEndpoint(properties.get("config.wfcUrl") + "/OnRequestChange/" + processID + "/" + returnMessage + "/"
+                + variableName + "/" + taskIdentifier);
         List<StringType> headers = new ArrayList<StringType>();
         headers.add(new StringType("returnMessage: " + returnMessage));
         headers.add(new StringType("processID: " + processID));
         headers.add(new StringType("variableName: " + variableName));
+        headers.add(new StringType("taskIdentifier: " + taskIdentifier));
         hook.setHeader(headers);
 
         subscription.setChannel(hook);
 
-
-        // Send Subscription to FHIR
-        HttpResponse<JsonNode> subResponse = Unirest.post(properties.get("config.fhirUrl") + "/fhir/Subscription"
-                )
+        HttpResponse<JsonNode> subResponse = Unirest.post(properties.get("config.fhirUrl") + "/fhir/Subscription")
                 .header("Content-Type", "application/json+fhir")
                 .body(parser.encodeResourceToString(subscription))
                 .asJson();
 
-        pendingRequests.get(processID).put(returnMessage, new String[]{fhirResource + "?" + query, subResponse.getBody().getObject().getString("id")});
-
+        pendingRequests.get(processID).put(returnMessage,
+                new String[] { fhirResource + "?" + query, subResponse.getBody().getObject().getString("id") });
     }
-
-
-    private Resource getFhirObject(String fhirResource, String query, IParser parser) {
-        HttpResponse<JsonNode> httpResponse = Unirest.get(properties.get("config.fhirUrl") + "/fhir/" +
-                        fhirResource + "?" + query)
-                .asJson();
-
-        Bundle bundle = (Bundle) parser.parseResource(httpResponse.getBody().toString());
-        Resource resource = null;
-        if (bundle.hasEntry()) {
-            resource = new FhirDataResources(properties.get("config.fhirUrl") + "/fhir/").getFirstBundleEntry(bundle);
-            System.out.println("RESOURCE: " + resource.getId());
+    public Resource getFhirObject(String fhirResource, String query, IParser parser) {
+        String baseFhirUrl = properties.get("config.fhirUrl") + "/fhir/";
+        String requestUrl = baseFhirUrl + fhirResource + "?" + query;
+        System.out.println("Getting FHIR Resource from: " + requestUrl);
+        int maxRetries = 5;
+        int retryDelayMillis = 1000;
+        
+        for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
+            try {
+                HttpResponse<JsonNode> httpResponse = Unirest.get(requestUrl).asJson();
+                
+                if (httpResponse.isSuccess()) {
+                    Bundle bundle = (Bundle) parser.parseResource(httpResponse.getBody().toString());
+                    if (bundle.hasEntry()) {
+                        return new FhirDataResources(baseFhirUrl).getFirstBundleEntry(bundle);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Exception occurred while fetching FHIR resource (retry " + retryCount + "): " + e.getMessage());
+            }
+            
+            try {
+                Thread.sleep(retryDelayMillis);
+            } catch (InterruptedException e) {
+                System.err.println("Thread sleep interrupted: " + e.getMessage());
+            }
+            
+            retryDelayMillis *= 2; // Exponential backoff
         }
-        return resource;
+        
+        System.err.println("Failed to fetch FHIR resource after " + maxRetries + " retries.");
+        return null;
     }
-}
-
-
-class IncorrectQueryException extends Exception {
-    IncorrectQueryException(String errorMessage) {
-        super(errorMessage);
+    public class IncorrectQueryException extends Exception {
+        public IncorrectQueryException(String message) {
+            super(message);
+        }
     }
 }

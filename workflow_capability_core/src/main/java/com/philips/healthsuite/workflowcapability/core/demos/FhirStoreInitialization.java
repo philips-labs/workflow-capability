@@ -1,6 +1,8 @@
 package com.philips.healthsuite.workflowcapability.core.demos;
 
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
+
+import org.apache.jena.base.Sys;
 import org.hl7.fhir.r4.model.Subscription;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -22,10 +24,10 @@ public class FhirStoreInitialization {
 
 
     public void run() {
+        System.out.println("Running FhirStoreInitialization");
         this.wfcUrl = this.env.getProperty("config.wfcUrl");
         this.fhirUrl = this.env.getProperty("config.fhirUrl");
         this.fhirDataResources = new FhirDataResources(this.fhirUrl + "/fhir");
-
         addTaskSubscription();
         addCarePlanSubscription();
     }
@@ -42,7 +44,7 @@ public class FhirStoreInitialization {
         fhirDataResources.addResource(taskSubscription);
     }
 
-
+    
     public void addCarePlanSubscription() {
         Subscription carePlanSubscription = new Subscription();
         carePlanSubscription.setStatus(Subscription.SubscriptionStatus.REQUESTED);

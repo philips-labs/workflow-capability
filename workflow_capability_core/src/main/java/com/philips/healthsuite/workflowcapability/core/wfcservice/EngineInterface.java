@@ -1,6 +1,7 @@
 package com.philips.healthsuite.workflowcapability.core.wfcservice;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 public interface EngineInterface {
 
