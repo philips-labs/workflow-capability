@@ -157,6 +157,21 @@ public class SubscriptionController {
         }
     }
 
+    /**
+     * @param processID
+     * @param returnMessage
+     * @param variableName
+     * @param query
+     * @throws IOException
+     */
+    @RequestMapping(
+            value = "/PostObservationValue/",
+            method = RequestMethod.POST)
+    @Async
+    void postObservationValue(@RequestBody String data) throws IOException {
+        this.engineQueryHandler.postFhirResource(data);
+    }
+
 
     /**
      * @param carePlanInstanceID

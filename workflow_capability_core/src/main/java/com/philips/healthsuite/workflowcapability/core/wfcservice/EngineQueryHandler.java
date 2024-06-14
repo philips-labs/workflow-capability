@@ -6,7 +6,10 @@ import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataRes
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Subscription;
@@ -32,6 +35,27 @@ public class EngineQueryHandler {
         pendingRequests = new HashMap<>();
     }
 
+    public void postFhirResource(@NotNull String data) {
+        FhirContext ctx = FhirContext.forR4();
+        try {
+            IParser parser = ctx.newJsonParser();
+            IBaseResource resource = parser.parseResource(data);
+            String fhirResource = resource.fhirType();
+
+            postFhirObject(fhirResource, data);
+        }
+        catch (Exception e) {
+            System.out.println("Incorrect data" + e);
+        }
+    }
+
+    private void postFhirObject(String fhirResource, String data) {
+        HttpResponse<JsonNode> httpResponse = Unirest.post(properties.get("config.fhirUrl") + "/fhir/" +
+                        fhirResource)
+                .header("Content-Type", "application/json")
+                .body(data)
+                .asJson();
+    }
 
     public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName) {
         FhirContext ctx = FhirContext.forR4();
