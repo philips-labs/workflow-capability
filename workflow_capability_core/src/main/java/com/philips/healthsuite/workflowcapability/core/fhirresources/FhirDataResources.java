@@ -493,7 +493,6 @@ public class FhirDataResources {
                 if (taskBundle != null && !taskBundle.getEntry().isEmpty()) {
                     for (BundleEntryComponent entry : taskBundle.getEntry()) {
                         Task task = (Task) entry.getResource();
-                        logger.info("Task ID: " + task.getId());
                         for (Identifier identifier : task.getIdentifier()) {
                             if ("camundaIdentifier".equals(identifier.getSystem().toString())
                                     && identifier.getValue().toString().equals(camundaTaskIdentifier)) {
