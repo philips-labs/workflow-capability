@@ -2,6 +2,7 @@ package com.philips.healthsuite.workflowcapability.core.wfcservice;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -14,15 +15,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Logger;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class EngineQueryHandler {
     HashMap<String, HashMap<String, String[]>> pendingRequests;
     Properties properties;
-
+    Logger logger =  Logger.getLogger(EngineQueryHandler.class.getName());
     public EngineQueryHandler() throws IOException {
         properties = new Properties();
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.properties");
@@ -30,9 +40,61 @@ public class EngineQueryHandler {
         pendingRequests = new HashMap<>();
     }
 
+    public String removeDateParameter(String originalQuery) {
+
+        Pattern datePattern = Pattern.compile("&date=[^&]*");
+        Matcher matcher = datePattern.matcher(originalQuery);
+
+        if (matcher.find()) {
+            logger.info("Date pattern found and removed");
+            originalQuery = matcher.replaceAll("");
+        }
+
+        return originalQuery;
+    }
+    public String fetchByTime(String originalQuery) {
+        // Updated pattern to match the new format date=(NOW -4s)
+        Pattern timePattern = Pattern.compile("date=\\(NOW -?(\\d+)([SMHD])\\)");
+        Matcher matcher = timePattern.matcher(originalQuery);
+        if (!matcher.find()) {
+            logger.info("No time pattern found");
+            return originalQuery;
+        }
+
+        int value = Integer.parseInt(matcher.group(1));
+        String unit = matcher.group(2);
+        Instant currentDate = Instant.now();
+        switch (unit) {
+            case "S":
+                currentDate = currentDate.minus(value, ChronoUnit.SECONDS);
+                break;
+            case "M":
+                currentDate = currentDate.minus(value, ChronoUnit.MINUTES);
+                break;
+            case "H":
+                currentDate = currentDate.minus(value, ChronoUnit.HOURS);
+                break;
+            case "D":
+                currentDate = currentDate.minus(value, ChronoUnit.DAYS);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported time unit");
+        }
+
+        String isoDate = DateTimeFormatter.ISO_INSTANT.format(currentDate);
+        logger.info("Current Date is: " + isoDate + " " + unit + " " + value);
+
+        // Update the original query with the computed date
+        String updatedQuery = originalQuery.replaceAll("date=\\(NOW -?\\d+[SMHD]\\)", "date=ge" + isoDate);
+
+        return updatedQuery;
+    }
+
     public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName, String taskIdentifier) throws IOException {
         FhirContext ctx = FhirContext.forR4();
-        System.out.println("Get params: " + query + ": " + returnMessage + " : " + processID + " : " + variableName + " : " + taskIdentifier);
+        // WfcPatternChecker wfcPattern =  new WfcPatternChecker();
+        // query  = wfcPattern.evaluateQuery(query);
+        logger.info("Get params: " + query + ": " + returnMessage + " : " + processID + " : " + variableName + " : " + taskIdentifier);
         try {
             // Extract CRUD Operator
             String[] crudOperationSplit = query.split(":");
@@ -67,7 +129,7 @@ public class EngineQueryHandler {
             if (crudOperation.equals("FHIR(FETCH)")) {
                  resource = getFhirObject(fhirResource, query, parser);
                 if (resource != null) {
-                    System.out.println("Resource from fetch condition: ");
+                    logger.info("Resource from fetch condition: ");
                     return resource;
                 }
                 else
@@ -75,13 +137,14 @@ public class EngineQueryHandler {
             }
 
         } catch (IncorrectQueryException e) {
-            System.out.println("Incorrect query, please use the format {CRUD Operation}:{FHIR Resource Type}?{FHIR Query} -> " + e);
+            logger.info("Incorrect query, please use the format {CRUD Operation}:{FHIR Resource Type}?{FHIR Query} -> " + e);
         }
         return null;
     }
 
     private void subscribeToFhirObject(String fhirResource, String query, IParser parser, String processID,
         String returnMessage, String variableName, String taskIdentifier) {
+        logger.info("Subscribing to FHIR Resource");
         if (!pendingRequests.containsKey(processID)) {
             pendingRequests.put(processID, new HashMap<>());
         }
@@ -102,6 +165,7 @@ public class EngineQueryHandler {
 
         subscription.setChannel(hook);
 
+        // Send Subscription to FHIR
         HttpResponse<JsonNode> subResponse = Unirest.post(properties.get("config.fhirUrl") + "/fhir/Subscription")
                 .header("Content-Type", "application/json+fhir")
                 .body(parser.encodeResourceToString(subscription))
@@ -110,11 +174,13 @@ public class EngineQueryHandler {
         pendingRequests.get(processID).put(returnMessage,
                 new String[] { fhirResource + "?" + query, subResponse.getBody().getObject().getString("id") });
     }
+
+
     public Resource getFhirObject(String fhirResource, String query, IParser parser) {
         String baseFhirUrl = properties.get("config.fhirUrl") + "/fhir/";
         String requestUrl = baseFhirUrl + fhirResource + "?" + query;
-        System.out.println("Getting FHIR Resource from: " + requestUrl);
-        int maxRetries = 5;
+        logger.info("Getting FHIR Resource from: " + requestUrl);
+        int maxRetries = 3;
         int retryDelayMillis = 1000;
         
         for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
@@ -128,24 +194,25 @@ public class EngineQueryHandler {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Exception occurred while fetching FHIR resource (retry " + retryCount + "): " + e.getMessage());
+                logger.severe("Exception occurred while fetching FHIR resource (retry " + retryCount + "): " + e.getMessage());
             }
             
             try {
                 Thread.sleep(retryDelayMillis);
             } catch (InterruptedException e) {
-                System.err.println("Thread sleep interrupted: " + e.getMessage());
+                // Ignore
             }
             
             retryDelayMillis *= 2; // Exponential backoff
         }
         
-        System.err.println("Failed to fetch FHIR resource after " + maxRetries + " retries.");
+        logger.severe("Failed to fetch FHIR resource after " + maxRetries + " retries.");
         return null;
     }
-    public class IncorrectQueryException extends Exception {
-        public IncorrectQueryException(String message) {
-            super(message);
-        }
+}
+
+class IncorrectQueryException extends Exception {
+    IncorrectQueryException(String errorMessage) {
+        super(errorMessage);
     }
 }
