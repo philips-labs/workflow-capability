@@ -187,7 +187,7 @@ public class FhirDataResources {
             }
             task.setIntent(TaskIntent.UNKNOWN);
             task.setExecutionPeriod(task.getExecutionPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
-            task.addIdentifier().setSystem("camundaIdentifier").setValue(taskIdentifier);
+            task.addIdentifier().setSystem("taskIdentifier").setValue(taskIdentifier);
 
             if (task.getExecutionPeriod() == null) {
                 task.setExecutionPeriod(new Period().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
