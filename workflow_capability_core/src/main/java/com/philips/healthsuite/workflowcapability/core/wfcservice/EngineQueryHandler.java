@@ -173,7 +173,13 @@ public class EngineQueryHandler {
                 new String[] { fhirResource + "?" + query, subResponse.getBody().getObject().getString("id") });
     }
 
-
+/*
+ * This method is used to get the FHIR resource from the FHIR server
+ * @param fhirResource - The FHIR resource type to fetch
+ * @param query - The query to fetch the FHIR resource
+ * @param parser - The parser to parse the FHIR resource
+ *  The retry mechanism is used to wait and check for the database in case FHIR is in the process of updating the database
+ */
     public Resource getFhirObject(String fhirResource, String query, IParser parser) {
         String baseFhirUrl = properties.get("config.fhirUrl") + "/fhir/";
         String requestUrl = baseFhirUrl + fhirResource + "?" + query;
