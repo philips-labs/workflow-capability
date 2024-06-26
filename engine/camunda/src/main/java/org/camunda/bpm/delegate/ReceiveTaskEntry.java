@@ -35,7 +35,9 @@ public class ReceiveTaskEntry implements JavaDelegate {
         else
             logger.info("no boundary message events");
     }
-
+    /*
+     * For further implementation of the boundary message event on receive task
+     */
     private BoundaryEvent findMessageBoundaryEvent(ReceiveTask receiveTask, Collection<BoundaryEvent> boundaryEvents) {
         for (BoundaryEvent event : boundaryEvents) {
             if (event.getAttachedTo().getId().equals(receiveTask.getId())) {

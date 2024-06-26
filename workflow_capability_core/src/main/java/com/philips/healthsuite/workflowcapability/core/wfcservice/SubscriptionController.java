@@ -158,7 +158,7 @@ public class SubscriptionController {
                     logger.info("Task Identifier is receiveTask");
                     return;
                 }
-                fhirDataResources.updateTaskByTaskIdentifier(taskIdentifier.toString());
+                fhirDataResources.completeTaskInFHIR(taskIdentifier.toString());
             }
         } catch (Exception e) {
             logger.severe("Error processing FHIR resource: " + e.getMessage());

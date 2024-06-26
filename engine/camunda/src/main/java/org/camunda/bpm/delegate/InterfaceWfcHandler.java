@@ -22,10 +22,19 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 
+/**
+ * This class is used to handle the interface between the workflow capability and the workflow engine 
+ * It is used to handle the boundary message events and the data object reference in the workflow engine
+ * It is also used to create user tasks in the workflow engine
+ * 
+ */
 public class InterfaceWfcHandler {
 private final Logger logger = Logger.getLogger(InterfaceWfcHandler.class.getName());
 
-public String processQuery(String query, DelegateTask delegateTask) {
+/* 
+ * This method is used to process the query and replace the process variables with the actual values
+ */
+private String processQuery(String query, DelegateTask delegateTask) {
     StringBuffer sb = new StringBuffer();
     Pattern pattern = Pattern.compile("\\$\\((\\w+)\\)");
     Matcher matcher = pattern.matcher(query);
@@ -45,6 +54,11 @@ public String processQuery(String query, DelegateTask delegateTask) {
     return sb.toString();
 }
 
+/* 
+ *  This method is used to handle the boundary message event interupting message boundary event attached to a user task
+ * @param messageBoundaryEvent 
+ * @param delegateTask
+*/
 public void handleBoundaryEvent(BoundaryEvent messageBoundaryEvent, DelegateTask delegateTask,
         Properties properties) {
     MessageEventDefinition messageEventDefinition = (MessageEventDefinition) messageBoundaryEvent
@@ -63,22 +77,19 @@ public void handleBoundaryEvent(BoundaryEvent messageBoundaryEvent, DelegateTask
     requestData(query, delegateTask.getProcessInstanceId(), messageName, variableName, delegateTask.getId(),
             properties);
 }
-
+/*
+ * This method is used to handle the data object reference in this implemetation associated with receieve task
+ * @param properties, delegateExecution
+ */
 public void dataObjectReferenceImpl(Properties properties, DelegateExecution delegateExecution) {
-
     String message = "";
     ReceiveTask receiveTask = null;
-    try {
-        receiveTask = delegateExecution.getProcessEngine().getRepositoryService()
+    receiveTask = delegateExecution.getProcessEngine().getRepositoryService()
                 .getBpmnModelInstance(delegateExecution.getProcessDefinitionId())
                 .getModelElementById(delegateExecution.getCurrentActivityId());
-        message = receiveTask.getMessage().getName();
-    } catch (Exception e) {
-        logger.severe("No message found for current Receive Task");
-    }
+    message = receiveTask.getMessage().getName();
     String variableName = "";
     String query = "";
-    try {
         BpmnModelInstance bpmModel = delegateExecution.getProcessEngine().getRepositoryService()
                 .getBpmnModelInstance(delegateExecution.getProcessDefinitionId());
         receiveTask = bpmModel.getModelElementById(delegateExecution.getCurrentActivityId());
@@ -92,9 +103,6 @@ public void dataObjectReferenceImpl(Properties properties, DelegateExecution del
                 }
             }
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
 
     StringBuffer sb = new StringBuffer();
     Matcher m = Pattern.compile("\\$\\((.*?)\\)").matcher(query);
@@ -106,12 +114,16 @@ public void dataObjectReferenceImpl(Properties properties, DelegateExecution del
     }
     m.appendTail(sb);
     query = sb.toString();
-    //this task identifier is cosidered as the task id of the receive task, it is because the receive task is not registered in the database
+    // The task identifier in this case is, cosidered as the task id of the receive task, it is because the receive task is not registered in the database
     requestData(query, delegateExecution.getProcessInstanceId(), message, variableName, "receiveTask",
             properties);
-
 }
 
+/*
+ * this method is used notfify the wfc to create a user task in the FHIR
+ * @param properties
+ * @param delegateTask
+*/
 public boolean createUserTask(Properties properties, DelegateTask delegateTask) {
     try {
         HttpResponse<JsonNode> httpResponse = Unirest.post(properties.getProperty("wfc.url") +
@@ -120,17 +132,26 @@ public boolean createUserTask(Properties properties, DelegateTask delegateTask) 
                 .asJson();
 
         if (httpResponse.getStatus() != 200) {
-            logger.warning("Failed to create UserTask: " + httpResponse.getStatusText());
+            logger.warning("wfc Failed to create UserTask: " + httpResponse.getStatusText());
             return false;
         } else
              return true;
     } catch (Exception e) {
-        logger.severe("Failed to create UserTask: " + e.getMessage());
+        logger.severe("Engine Failed to create UserTask: " + e.getMessage());
         return false;
     }
 }
 
-public void requestData(String query, String delegateTask, String messageName, String variableName,
+/*
+ * This method is used to send the request to the wfc to request data from the FHIR via wfc service
+ * @param query
+ * @param delegateTask
+ * @param messageName
+ * @param variableName
+ * @param taskIdentifier
+ * @param properties
+*/
+private void requestData(String query, String delegateTask, String messageName, String variableName,
         String taskIdentifier,
         Properties properties) {
     try {
@@ -147,7 +168,7 @@ public void requestData(String query, String delegateTask, String messageName, S
                     + httpResponse.getStatus());
         }
     } catch (Exception e) {
-        logger.warning("Failed to post observation value: " + e.getMessage());
+        logger.severe("Failed to post observation value: " + e.getMessage());
     }
 }
 }

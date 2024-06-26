@@ -30,6 +30,7 @@ This project consists of five modules:
 3. **Management Dashboard (md):** Hospital management can use this app to view statistics about patients and protocols.
 4. **Workflow Engine (we):** The app used to execute the BPMN & DMN workflows. The currently used one is Camunda.
 5. **FHIR Store:** This is the FHIR database used to store patient and workflow data. We use the existing 'Hapi-FHIR' implementation.
+6. **PULSE-Physiology-Engine_FHIR**  The module used to simulate vital sign and sends the values to FHIR
 
 ### Architecture
 The architecture to these models can be found here: [docs/Architecture.md](docs/Architecture.md)
@@ -90,7 +91,7 @@ The service ports and the service references can be set at the following locatio
 2. **Caregiver Application**: `caregiver_application/service_config.py`  
 3. **Management Dashboard**: `management_dashboard/package.json`, `management_dashboard\src\environments\environment.ts`
 4. **Workflow Engine**: `engine/camunda/src/main/resources/`  
-
+ * If you are using docker, use http://host.docker.internal:port in each configration files
 ## Additional information
 - This prototype is based on BPMN and DMN models, and shows an architecture that makes Vendor Replacement obtainable.
 - The application is an example application that uses the FHIR store, but can be exchanged with an arbitrary application. The application and Workflow Capability part of the system, can be used independent of eachother.

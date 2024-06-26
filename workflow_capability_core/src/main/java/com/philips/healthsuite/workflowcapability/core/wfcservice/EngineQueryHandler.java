@@ -92,8 +92,6 @@ public class EngineQueryHandler {
 
     public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName, String taskIdentifier) throws IOException {
         FhirContext ctx = FhirContext.forR4();
-        // WfcPatternChecker wfcPattern =  new WfcPatternChecker();
-        // query  = wfcPattern.evaluateQuery(query);
         logger.info("Get params: " + query + ": " + returnMessage + " : " + processID + " : " + variableName + " : " + taskIdentifier);
         try {
             // Extract CRUD Operator

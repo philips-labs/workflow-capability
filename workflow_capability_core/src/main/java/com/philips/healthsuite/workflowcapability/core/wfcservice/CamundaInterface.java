@@ -96,57 +96,29 @@ public class CamundaInterface implements EngineInterface {
             return "Error checking task status";
         }
     }
-
+/*
+ * This method is sending message to BPM Engine waiting for the message to be received
+ * @param messageID, processID, variableName, variableJson
+ */
     @Override
     public void sendMessage(String messageID, String processID, String variableName, String variableJson) {
-        int maxRetries = 3; // adjust the maximum retries as needed
-        int retries = 0;
-        boolean messageSent = false;
-
-        while (retries <= maxRetries && !messageSent) {
-            try {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("messageName", messageID);
-                jsonObject.put("processInstanceId", processID);
-                if (variableJson != null) {
-                    JSONObject processVariables = new JSONObject();
-                    JSONObject jsonVars = new JSONObject();
-                    jsonVars.put("value", variableJson);
-                    jsonVars.put("type", "Json");
-                    processVariables.put(variableName, jsonVars);
-                    jsonObject.put("processVariables", processVariables);
-                }
-
-                HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl + "/engine-rest/message/")
-                        .header("Content-Type", "application/json")
-                        .body(jsonObject)
-                        .asJson();
-
-                if (httpResponse.getStatus() == 200 || httpResponse.getStatus() == 204) {
-                    logger.info("Message sent successfully: " + httpResponse.getStatus() + " "
-                            + httpResponse.getStatusText());
-                    messageSent = true;
-                } else {
-                    logger.info("Failed to send message: " + httpResponse.getStatusText());
-                    retries++;
-                    // wait for 1 second before retrying
-                    Thread.sleep(1000);
-                }
-            } catch (Exception e) {
-                logger.severe("Error sending message: " + e.getMessage());
-                retries++;
-                // wait for 1 second before retrying
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e1) {
-                    logger.severe("Error sleeping thread: " + e1.getMessage());
-                    e1.printStackTrace();
-                }
-            }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("messageName", messageID);
+        jsonObject.put("processInstanceId", processID);
+        if (variableJson != null) {
+            JSONObject processVariables = new JSONObject();
+            JSONObject jsonVars = new JSONObject();
+            jsonVars.put("value", variableJson);
+            jsonVars.put("type", "Json");
+            processVariables.put(variableName, jsonVars);
+            jsonObject.put("processVariables", processVariables);
         }
+        HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl +
+                        "/engine-rest/message/")
+                .header("Content-Type", "application/json")
+                .body(jsonObject)
+                .asJson();
+        
 
-        if (!messageSent) {
-            logger.severe("Failed to send message after " + maxRetries + " retries");
-        }
     }
 }

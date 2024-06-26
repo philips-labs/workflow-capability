@@ -39,7 +39,7 @@ public class FhirStoreInitialization {
     }
 
 
-    public void addTaskSubscription() {
+    private void addTaskSubscription() {
         logger.info("Adding Task Subscription");
         Subscription taskSubscription = new Subscription();
         taskSubscription.setStatus(Subscription.SubscriptionStatus.REQUESTED);
@@ -65,7 +65,7 @@ public class FhirStoreInitialization {
     //     fhirDataResources.addResource(observationValueChangeSubscription);
     // }
     
-    public void addCarePlanSubscription() {
+    private void addCarePlanSubscription() {
         logger.info("Adding CarePlan Subscription");
         Subscription carePlanSubscription = new Subscription();
         carePlanSubscription.setStatus(Subscription.SubscriptionStatus.REQUESTED);
