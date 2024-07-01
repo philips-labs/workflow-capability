@@ -2,9 +2,9 @@ package com.philips.healthsuite.workflowcapability.core.wfcservice;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
 
-import org.apache.jena.base.Sys;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.Resource;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,21 +16,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 
 /**
  * TODO: Add description
  */
 @RestController
 public class SubscriptionController {
+
     private FhirDataResources fhirDataResources;
     private FhirContext ctx = FhirContext.forR4();
     private EngineQueryHandler engineQueryHandler;
     @Value("${config.fhirUrl}")
     private String fhirUrl;
     private List<String> taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted = new ArrayList<>();
-
+    Logger logger =  Logger.getLogger(SubscriptionController.class.getName());
     /**
      * @throws IOException
      */
@@ -68,25 +69,8 @@ public class SubscriptionController {
             @PathVariable("returnMessage") String returnMessage,
             @PathVariable("variableName") String variableName,
             @PathVariable("taskIdentifier") String taskIdentifier) throws IOException, InterruptedException {
-
         String[] query = this.engineQueryHandler.pendingRequests.get(processID).get(returnMessage);
-        Resource resource = this.engineQueryHandler.getFhirResource("FHIR(GET):" + query[0], returnMessage, processID,
-                variableName, taskIdentifier);
-        this.fhirDataResources
-                .removeResource((Resource) this.fhirDataResources.getResourceById(query[1], "Subscription"));
-
-        if (resource != null) {
-
-            IParser parser = this.ctx.newJsonParser();
-            String resourceString = parser.encodeResourceToString(resource);
-            EngineInterface engineInterface = new EngineInterfaceFactory().getEngineInterface("CAMUNDA");
-            engineInterface.sendMessage(returnMessage, processID, variableName, resourceString);
-            fhirDataResources.completeTaskById(taskIdentifier);
-
-        }
-        else {
-        
-        }
+        sendDataToEngineAndUpdateTask(processID, returnMessage, variableName, taskIdentifier,"FHIR(GET):" + query[0]);
     }
 
     /**
@@ -154,26 +138,33 @@ public class SubscriptionController {
     @RequestMapping(value = "/RequestObservationValue/{processID}/{returnMessage}/{variableName}/{taskIdentifier}", method = RequestMethod.POST)
     @Async
 
-    public void informEngineAboutObservationValue(@PathVariable("processID") String processID,
+    public void sendDataToEngineAndUpdateTask(@PathVariable("processID") String processID,
             @PathVariable("returnMessage") String returnMessage,
             @PathVariable("variableName") String variableName,
             @PathVariable("taskIdentifier") String taskIdentifier,
             @RequestBody String query) {
         final ReentrantLock lock = new ReentrantLock();
+        lock.lock();
         try {
-            lock.lock();
             Resource resource = this.engineQueryHandler.getFhirResource(query, returnMessage, processID, variableName,
                     taskIdentifier);
             if (resource != null) {
+                logger.info("Query from database: " + query+ " "+returnMessage+ " "+processID+ " "+variableName+ " "+taskIdentifier);
                 IParser parser = this.ctx.newJsonParser();
                 String resourceString = parser.encodeResourceToString(resource);
                 EngineInterface engineInterface = new EngineInterfaceFactory().getEngineInterface("CAMUNDA");
                 engineInterface.sendMessage(returnMessage, processID, variableName, resourceString);
-                fhirDataResources.completeTaskById(taskIdentifier);
+                if (taskIdentifier.toString().equals("receiveTask")) {
+                    logger.info("Task Identifier is receiveTask");
+                    return;
+                }
+                fhirDataResources.completeTaskInFHIR(taskIdentifier.toString());
             }
         } catch (Exception e) {
+            logger.severe("Error processing FHIR resource: " + e.getMessage());
             e.printStackTrace();
         } finally {
+            logger.info("Finally block");
             lock.unlock();
         }
     }
@@ -199,8 +190,7 @@ public class SubscriptionController {
             }
         });
 
-    }
-
+    }    
     /**
      * @param newCarePlans
      * @throws IOException

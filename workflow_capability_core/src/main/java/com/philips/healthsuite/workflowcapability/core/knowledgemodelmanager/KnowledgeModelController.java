@@ -4,6 +4,8 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import com.philips.healthsuite.workflowcapability.core.wfcservice.EngineInterface;
 import com.philips.healthsuite.workflowcapability.core.knowledgemodelmanager.camundaInterface.CamundaXMLModifier;
 import com.philips.healthsuite.workflowcapability.core.wfcservice.EngineInterfaceFactory;
+import com.philips.healthsuite.workflowcapability.core.wfcservice.EngineQueryHandler;
+
 import org.apache.commons.cli.UnrecognizedOptionException;
 import org.hl7.fhir.r4.model.*;
 import org.hl7.fhir.r4.model.PlanDefinition.PlanDefinitionActionComponent;
@@ -30,12 +32,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.logging.Logger;
 
 @RestController
 @PropertySource("classpath:application.properties")
 public class KnowledgeModelController {
     EngineInterfaceFactory engineInterfaceFactory;
-
+    Logger logger =  Logger.getLogger(KnowledgeModelController.class.getName());
     @Value("${config.fhirUrl}")
     String fhirUrl;
 
@@ -64,7 +67,7 @@ public class KnowledgeModelController {
             String fhirPlanDefinitionName = createFHIRObjects(bpmnModel);
             File modifiedFileName = addCamundaTags(bpmnModel);
             deployModel(modifiedFileName, fhirPlanDefinitionName);
-            return "Model successfully deployed in Camunda.";
+            return "Model successfully deployed in Engine.";
         } catch (IOException e) {
             return e.toString();
         } catch (SAXException e) {
@@ -107,7 +110,7 @@ public class KnowledgeModelController {
 
             // Deploying model
             deployModel(newFile, newFile.getName());
-            return "Model successfully deployed in Camunda ";
+            return "Model successfully deployed in Engine ";
         } catch (Exception e) {
             e.printStackTrace();
             return "Problem with deploying model";
@@ -190,7 +193,7 @@ public class KnowledgeModelController {
                     throw new UnrecognizedOptionException("Unmatched gender: " + gender);
             }
         } catch (Exception e) {
-            System.err.println("Error while parsing input parameters for patient creation: " + e);
+            logger.severe("Error while parsing input parameters for patient creation: " + e);
             return "Error while parsing input parameters for patient creation.";
         }
 
@@ -201,7 +204,7 @@ public class KnowledgeModelController {
                     List.of(address), List.of(meansOfCommunication)
             );
         } catch (Exception e) {
-            System.err.println("Exception during creating patient: " + e.toString());
+            logger.severe("Exception during creating patient: " + e.toString());
             return "Problem with creating new patient.";
         }
 

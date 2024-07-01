@@ -1,23 +1,12 @@
 package com.philips.healthsuite.workflowcapability.core.fhirresources;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.*;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.gclient.TokenClientParam;
-import ca.uhn.fhir.rest.server.exceptions.PreconditionFailedException;
-import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
-
-import org.apache.jena.base.Sys;
 import org.apache.logging.log4j.util.Strings;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.instance.model.api.IIdType;
-import org.hl7.fhir.r4.formats.IParser;
 import org.hl7.fhir.r4.model.*;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.CarePlan.CarePlanActivityComponent;
@@ -28,6 +17,7 @@ import org.hl7.fhir.r4.model.Task.TaskStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Provides queries to FHIR server.
@@ -37,9 +27,12 @@ public class FhirDataResources {
     private final String fhirServerUrl;
     private final IGenericClient fhirClient;
 
+    static Logger logger = Logger.getLogger(FhirDataResources.class.getName());
+
     public FhirDataResources(String baseURL) {
         this.fhirServerUrl = baseURL;
         this.fhirClient = this.ctx.newRestfulGenericClient(this.fhirServerUrl);
+
     }
 
     /**
@@ -117,7 +110,7 @@ public class FhirDataResources {
      * @return CarePlan or None if no careplan with said instanceID is found
      */
     private CarePlan getCarePlanByIdentifier(Bundle carePlanBundle, String instanceID) {
-        // System.out.println(">> This is an instanceID: " + instanceID);
+        // logger.info(">> This is an instanceID: " + instanceID);
         for (int i = 0; i < carePlanBundle.getEntry().size(); i++) {
             CarePlan carePlan = (CarePlan) carePlanBundle.getEntry().get(i).getResource();
             List<Identifier> identifierList = carePlan.getIdentifier();
@@ -194,7 +187,7 @@ public class FhirDataResources {
             }
             task.setIntent(TaskIntent.UNKNOWN);
             task.setExecutionPeriod(task.getExecutionPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
-            task.addIdentifier().setSystem("camundaIdentifier").setValue(taskIdentifier);
+            task.addIdentifier().setSystem("taskIdentifier").setValue(taskIdentifier);
 
             if (task.getExecutionPeriod() == null) {
                 task.setExecutionPeriod(new Period().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
@@ -216,6 +209,7 @@ public class FhirDataResources {
             return fhirClient.update().resource(carePlan).execute();
         }
     }
+
     /**
      * Adds a PlanDefinitionActionComponent to an already existing PlanDefinition in
      * the FHIR Store
@@ -467,9 +461,9 @@ public class FhirDataResources {
 
     public void updateResource(Resource resource) {
         if (fhirClient.update().resource(resource).execute().getCreated() != null) {
-            System.out.println("Resource updated successfully");
+            logger.info("Resource updated successfully");
         } else {
-            System.out.println("Resource update failed");
+            logger.severe("Resource update failed");
         }
     }
 
@@ -477,20 +471,27 @@ public class FhirDataResources {
      * Method for marking fhir task as completed.
      *
      * @param taskIdentifier
+     * @throws InterruptedException
      * 
      */
-
-    public boolean completeTaskById(String camundaTaskIdentifier) throws InterruptedException {
-        if (camundaTaskIdentifier == null || camundaTaskIdentifier.isEmpty()) {
+/**
+     * Method for marking a FHIR Task as completed.
+     * Each task in FHIR is identified by taskIdentifier value.
+     * @param taskIdentifier
+     * 
+     */
+    public boolean completeTaskInFHIR(String taskIdentifier) throws InterruptedException {
+        if (taskIdentifier == null || taskIdentifier.isEmpty()) {
             throw new IllegalArgumentException("Error: Task identifier cannot be null or empty.");
         }
-        int retries = 0;
-        while (retries <= 4) {
+        // The retry logic is implemented to handle the case where the task is not found in the first attempt due to Database commit delay.
+        int maxRetries = 3;
+        int retryDelayMillis = 1000;
+        
+        for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
             try {
                 Bundle taskBundle = fhirClient.search()
                         .forResource(Task.class)
-                        .where(Task.IDENTIFIER.exactly().systemAndValues("camundaIdentifier",
-                        camundaTaskIdentifier))
                         .returnBundle(Bundle.class)
                         .execute();
 
@@ -498,32 +499,36 @@ public class FhirDataResources {
                     for (BundleEntryComponent entry : taskBundle.getEntry()) {
                         Task task = (Task) entry.getResource();
                         for (Identifier identifier : task.getIdentifier()) {
-                            if ("camundaIdentifier".equals(identifier.getSystem())
-                                    && camundaTaskIdentifier.equals(identifier.getValue())) {
+                            if ("taskIdentifier".equals(identifier.getSystem().toString())
+                                    && identifier.getValue().toString().equals(taskIdentifier)) {
                                 if (task.getStatus() == TaskStatus.COMPLETED) {
+                                    logger.info("Task " + task.getId() + " is already completed.");
                                     return false;
                                 }
+                                // Update and complete the task
                                 task.setStatus(TaskStatus.COMPLETED);
                                 fhirClient.update().resource(task).execute();
-                                System.out.println("Task completed: " + task.getId());
+                                logger.info("Task completed: " + task.getId());
                                 return true;
                             }
                         }
                     }
                 } else {
-                    System.out.println("No tasks found.");
-                    Thread.sleep(1000);
-                    retries++;
-                    continue;
+                    logger.info("No tasks found in FHIR.");
                 }
-            } catch (Exception e) {
-                System.err.println("Error completing task: " + e.getMessage());
-                e.printStackTrace(); 
-                Thread.sleep(1000);
-                retries++;
+            } 
+            catch (Exception e) {
+                logger.severe("Exception occurred while completing task (retry " + retryCount + "): " + e.getMessage());
             }
+            try {
+                Thread.sleep(retryDelayMillis);
+            } catch (InterruptedException e) {
+                logger.severe("Thread sleep interrupted: " + e.getMessage());
+            }
+            
+            retryDelayMillis *= 2; // Exponential backoff
         }
         throw new RuntimeException(
-            "Maximum retries exceeded while completing task with camundaIdentifier: " + camundaTaskIdentifier);
+                "Maximum retries : " + maxRetries+ " exceeded while completing task with taskIdentifier: " + taskIdentifier);
     }
 }

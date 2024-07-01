@@ -13,4 +13,3 @@
 # To use docker  
 - docker build -t camunda-engine .
 - docker run -p 8080:8080 camunda-engine
-- use http://host.docker.internal instead of localhost when using docker
