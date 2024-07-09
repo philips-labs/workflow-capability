@@ -79,4 +79,6 @@ Use http://host.docker.internal:8180/fhir instead of http://localhost:8180/fhir 
 
 - After running the code and entering the real patient Id, expect the initial state values registered in the FHIR server. After hitting the button Obstruct air for 20 seconds, the Fhir server will get the last available values and same is for any actions taken.
 
-- Look at the component diagram <img src="./component diagram.png" alt="Component Diagram" width="800" height="600" />
+- Look at the UML use case diagram <img src="./Diagrams/usecase_diagram.png" alt="System context Use case Diagram" width="800" height="600" />
+- The diagram shows clearly how a user interacts with the system and how different internal and external components are connected and interact with each other.
+- Additionaly, the following class diagram provides a high-level overview of the components and their interactions in the system, highlighting how the user interface interacts with the simulation core, which in turn interacts with data management and external components.<img src="./Diagrams/class_diagram.png" alt =" Class diagram" width ="800" height = "600"/>
