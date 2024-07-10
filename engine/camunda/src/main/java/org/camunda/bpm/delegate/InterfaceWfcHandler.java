@@ -22,6 +22,14 @@ import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 
+/*
+* VariableAccessor functional interface is providing a flexible way to access process variables from both DelegateTask and DelegateExecution contexts in this program. 
+* It enhances code reusability and flexibility, allowing the same query processing logic to be applied in various parts of the program without duplicating code.
+*/ 
+@FunctionalInterface
+interface VariableAccessor {
+    Object getVariable(String name);
+}
 /**
  * This class is used to handle the interface between the workflow capability and the workflow engine 
  * It is used to handle the boundary message events and the data object reference in the workflow engine
@@ -34,7 +42,7 @@ private final Logger logger = Logger.getLogger(InterfaceWfcHandler.class.getName
 /* 
  * This method is used to process the query and replace the process variables with the actual values
  */
-private String processQuery(String query, DelegateTask delegateTask) {
+private String processQuery(String query, VariableAccessor variableAccessor) {
     StringBuffer sb = new StringBuffer();
     Pattern pattern = Pattern.compile("\\$\\((\\w+)\\)");
     Matcher matcher = pattern.matcher(query);
@@ -46,7 +54,8 @@ private String processQuery(String query, DelegateTask delegateTask) {
             logger.info("The moment in variable is: " + variableName);
             replacement = "$(" + variableName + ")";
         } else {
-            replacement = (String) delegateTask.getVariable(variableName);
+            // replacement = (String) delegateTask.getVariable(variableName);
+            replacement = (String) variableAccessor.getVariable(variableName);
         }
         matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
     }
@@ -73,7 +82,8 @@ public void handleBoundaryEvent(BoundaryEvent messageBoundaryEvent, DelegateTask
     logger.info("Handling boundary event ID from separate component: " + messageBoundaryEvent.getId()
             + " with message: " + messageName);
     String variableName = messageBoundaryEvent.getName();
-    String query = processQuery(documentationText, delegateTask);
+    VariableAccessor accessor = varName -> delegateTask.getVariable(varName);
+    String query = processQuery(documentationText, accessor);
     requestData(query, delegateTask.getProcessInstanceId(), messageName, variableName, delegateTask.getId(),
             properties);
 }
@@ -82,6 +92,7 @@ public void handleBoundaryEvent(BoundaryEvent messageBoundaryEvent, DelegateTask
  * @param properties, delegateExecution
  */
 public void dataObjectReferenceImpl(Properties properties, DelegateExecution delegateExecution) {
+    VariableAccessor accessor = varName -> delegateExecution.getVariable(varName);
     String message = "";
     ReceiveTask receiveTask = null;
     receiveTask = delegateExecution.getProcessEngine().getRepositoryService()
@@ -103,17 +114,7 @@ public void dataObjectReferenceImpl(Properties properties, DelegateExecution del
                 }
             }
         }
-
-    StringBuffer sb = new StringBuffer();
-    Matcher m = Pattern.compile("\\$\\((.*?)\\)").matcher(query);
-    int count = 1;
-    while (m.find()) {
-        String reqVariable = m.group(count);
-        m.appendReplacement(sb, (String) delegateExecution.getVariable(reqVariable));
-        count++;
-    }
-    m.appendTail(sb);
-    query = sb.toString();
+    query = processQuery(query, accessor);
     // The task identifier in this case is, cosidered as the task id of the receive task, it is because the receive task is not registered in the database
     requestData(query, delegateExecution.getProcessInstanceId(), message, variableName, "receiveTask",
             properties);
