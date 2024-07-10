@@ -14,20 +14,20 @@ Before you begin, ensure you have the following installed:
 
 ### Clone the Repository (Optional)
 
-If the project is hosted on a version control system like GitHub, clone the repository using:
+Instruction to clone the repository using:
 
 ```sh
 git clone <repository-url>
 cd <repository-folder>
 
+Note: This repository is based on version:  kitware/pulse:4.1.0
+
 Build the Docker Image
 To build the Docker image for the project, navigate to the directory containing the Dockerfile and run:
-This repository is based on version:  kitware/pulse:4.1.0
 
 docker build -t ppe_fhir .
 Run the Docker Container
 To run the Docker container with Jupyter Notebook:
-
 
 docker run -p 8888:8888 ppe_fhir jupyter notebook --ip="0.0.0.0"
 This command maps port 8888 on your local machine to port 8888 on the container and starts the Jupyter Notebook server.
@@ -35,9 +35,10 @@ This command maps port 8888 on your local machine to port 8888 on the container 
 Access the Jupyter Notebook
 After running the container, open a web browser and navigate to:
 
-
 http://127.0.0.1:8888/notebook
 Enter the token provided in the terminal to log in to the Jupyter Notebook interface.
+
+![alt text](image.png)
 
 Application Usage
 FHIR Server Configuration
@@ -67,7 +68,7 @@ Use http://host.docker.internal:8180/fhir instead of http://localhost:8180/fhir 
 - This URL is specially designed to allow communication from within a Docker container to the host machine.
 
 #### Simulating Scenarios
-- Run the PMS notebook within the Jupyter interface.
+- Run the application notebook within the Jupyter interface.
 - Enter the patient_id when prompted by the notebook.
 - Use the interactive buttons provided to simulate different physiological scenarios such as airway obstruction and clearing.
 - The simulation results will be logged and sent to the FHIR server in real-time.
@@ -79,6 +80,6 @@ Use http://host.docker.internal:8180/fhir instead of http://localhost:8180/fhir 
 
 - After running the code and entering the real patient Id, expect the initial state values registered in the FHIR server. After hitting the button Obstruct air for 20 seconds, the Fhir server will get the last available values and same is for any actions taken.
 
-- Look at the UML use case diagram <img src="./Diagrams/usecase_diagram.png" alt="System context Use case Diagram" width="800" height="600" />
+- Look at the UML use case diagram <img src="./Diagrams/usecase_diagram.png" alt="System context Use case Diagram" width="600" height="600" />
 - The diagram shows clearly how a user interacts with the system and how different internal and external components are connected and interact with each other.
-- Additionaly, the following class diagram provides a high-level overview of the components and their interactions in the system, highlighting how the user interface interacts with the simulation core, which in turn interacts with data management and external components.<img src="./Diagrams/class_diagram.png" alt =" Class diagram" width ="800" height = "600"/>
+- Additionaly, the following class diagram provides a high-level overview of the components and their interactions in the system, highlighting how the user interface interacts with the simulation core, which in turn interacts with data management and external components.<img src="./Diagrams/class_diagram.png" alt =" Class diagram" width ="850" height = "600"/>
