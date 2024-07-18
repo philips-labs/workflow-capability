@@ -1,12 +1,12 @@
 package com.philips.healthsuite.workflowcapability.core.wfcservice;
-
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
+import org.elasticsearch.common.ParsingException;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
@@ -15,8 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
+
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -25,14 +24,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
-import java.util.Map;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EngineQueryHandler {
     HashMap<String, HashMap<String, String[]>> pendingRequests;
     Properties properties;
-    Logger logger =  Logger.getLogger(EngineQueryHandler.class.getName());
+    Logger logger = Logger.getLogger(EngineQueryHandler.class.getName());
+
     public EngineQueryHandler() throws IOException {
         properties = new Properties();
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.properties");
@@ -52,6 +52,7 @@ public class EngineQueryHandler {
 
         return originalQuery;
     }
+
     public String fetchByTime(String originalQuery) {
         // Updated pattern to match the new format date=(NOW -4s)
         Pattern timePattern = Pattern.compile("date=\\(NOW -?(\\d+)([SMHD])\\)");
@@ -90,9 +91,11 @@ public class EngineQueryHandler {
         return updatedQuery;
     }
 
-    public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName, String taskIdentifier) throws IOException {
+    public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName,
+            String taskIdentifier, boolean isInterrupting) throws IOException {
         FhirContext ctx = FhirContext.forR4();
-        logger.info("Get params: " + query + ": " + returnMessage + " : " + processID + " : " + variableName + " : " + taskIdentifier);
+        logger.info("Get params: " + query + ": " + returnMessage + " : " + processID + " : " + variableName + " : "
+                + taskIdentifier);
         try {
             // Extract CRUD Operator
             String[] crudOperationSplit = query.split(":");
@@ -122,26 +125,28 @@ public class EngineQueryHandler {
 
             }
             if (crudOperation.equals("FHIR(SUBSCRIBE)")) {
-                subscribeToFhirObject(fhirResource, query, parser, processID, returnMessage, variableName, taskIdentifier);
+                subscribeToFhirObject(fhirResource, query, parser, processID, returnMessage, variableName,
+                        taskIdentifier, isInterrupting);
             }
             if (crudOperation.equals("FHIR(FETCH)")) {
-                 resource = getFhirObject(fhirResource, query, parser);
+                resource = getFhirObject(fhirResource, query, parser);
                 if (resource != null) {
                     logger.info("Resource from fetch condition: ");
                     return resource;
-                }
-                else
-                subscribeToFhirObject(fhirResource, query, parser, processID, returnMessage, variableName, taskIdentifier);
+                } else
+                    subscribeToFhirObject(fhirResource, query, parser, processID, returnMessage, variableName,
+                            taskIdentifier, isInterrupting);
             }
 
         } catch (IncorrectQueryException e) {
-            logger.info("Incorrect query, please use the format {CRUD Operation}:{FHIR Resource Type}?{FHIR Query} -> " + e);
+            logger.info("Incorrect query, please use the format {CRUD Operation}:{FHIR Resource Type}?{FHIR Query} -> "
+                    + e);
         }
         return null;
     }
 
     private void subscribeToFhirObject(String fhirResource, String query, IParser parser, String processID,
-        String returnMessage, String variableName, String taskIdentifier) {
+            String returnMessage, String variableName, String taskIdentifier, boolean isInterrupting) {
         logger.info("Subscribing to FHIR Resource");
         if (!pendingRequests.containsKey(processID)) {
             pendingRequests.put(processID, new HashMap<>());
@@ -153,12 +158,13 @@ public class EngineQueryHandler {
         Subscription.SubscriptionChannelComponent hook = new Subscription.SubscriptionChannelComponent();
         hook.setType(Subscription.SubscriptionChannelType.RESTHOOK);
         hook.setEndpoint(properties.get("config.wfcUrl") + "/OnRequestChange/" + processID + "/" + returnMessage + "/"
-                + variableName + "/" + taskIdentifier);
+                + variableName + "/" + taskIdentifier + "/" + isInterrupting);
         List<StringType> headers = new ArrayList<StringType>();
         headers.add(new StringType("returnMessage: " + returnMessage));
         headers.add(new StringType("processID: " + processID));
         headers.add(new StringType("variableName: " + variableName));
         headers.add(new StringType("taskIdentifier: " + taskIdentifier));
+        headers.add(new StringType("isInterrupting: " + isInterrupting));
         hook.setHeader(headers);
 
         subscription.setChannel(hook);
@@ -173,45 +179,63 @@ public class EngineQueryHandler {
                 new String[] { fhirResource + "?" + query, subResponse.getBody().getObject().getString("id") });
     }
 
-/*
- * This method is used to get the FHIR resource from the FHIR server
- * @param fhirResource - The FHIR resource type to fetch
- * @param query - The query to fetch the FHIR resource
- * @param parser - The parser to parse the FHIR resource
- *  The retry mechanism is used to wait and check for the database in case FHIR is in the process of updating the database
- */
+    /*
+     * This method is used to get the FHIR resource from the FHIR server
+     * 
+     * @param fhirResource - The FHIR resource type to fetch
+     * 
+     * @param query - The query to fetch the FHIR resource
+     * 
+     * @param parser - The parser to parse the FHIR resource
+     * The retry mechanism is used to wait and check for the database in case FHIR
+     * is in the process of updating the database
+     */
+
     public Resource getFhirObject(String fhirResource, String query, IParser parser) {
         String baseFhirUrl = properties.get("config.fhirUrl") + "/fhir/";
         String requestUrl = baseFhirUrl + fhirResource + "?" + query;
-        logger.info("Getting FHIR Resource from: " + requestUrl);
-        int maxRetries = 3;
-        int retryDelayMillis = 1000;
-        
-        for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
+        int waitTime = 500; // milliseconds
+        int retries = 0;
+        while (retries < 5) {
             try {
                 HttpResponse<JsonNode> httpResponse = Unirest.get(requestUrl).asJson();
-                
                 if (httpResponse.isSuccess()) {
                     Bundle bundle = (Bundle) parser.parseResource(httpResponse.getBody().toString());
                     if (bundle.hasEntry()) {
-                        return new FhirDataResources(baseFhirUrl).getFirstBundleEntry(bundle);
+                        return new FhirDataResources(baseFhirUrl).getMostRecentBundleEntry(bundle);
                     }
+                    logger.info("No FHIR resource found. Retrying...");
+                } else {
+                    logger.info("Failed to fetch FHIR resource. Status code: " + httpResponse.getStatus());
+                    throw new FhirResourceAccessException(
+                            "Failed to fetch FHIR resource. Status code: " + httpResponse.getStatus());
                 }
+            } catch (UnirestException e) {
+                logger.severe("Network error occurred while fetching FHIR resource (retry " + (retries + 1) + "): "
+                        + e.getMessage());
+            } catch (ParsingException e) {
+                logger.severe("Error parsing FHIR response (retry " + (retries + 1) + "): " + e.getMessage());
             } catch (Exception e) {
-                logger.severe("Exception occurred while fetching FHIR resource (retry " + retryCount + "): " + e.getMessage());
+                logger.severe("Unexpected exception occurred while fetching FHIR resource (retry " + (retries + 1)
+                        + "): " + e.getMessage());
             }
-            
+            waitTime *= 2;
+            retries++;
             try {
-                Thread.sleep(retryDelayMillis);
+                Thread.sleep(waitTime);
             } catch (InterruptedException e) {
-                // Ignore
+                logger.severe("Thread sleep interrupted: " + e.getMessage());
+                break;
             }
-            
-            retryDelayMillis *= 2; // Exponential backoff
         }
-        
-        logger.severe("Failed to fetch FHIR resource after " + maxRetries + " retries.");
+        logger.severe("Failed to fetch FHIR resource after " + retries + " retries.");
         return null;
+    }
+
+    public class FhirResourceAccessException extends Exception {
+        public FhirResourceAccessException(String message) {
+            super(message);
+        }
     }
 }
 

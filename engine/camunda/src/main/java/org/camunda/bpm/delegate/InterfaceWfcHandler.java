@@ -70,6 +70,7 @@ private String processQuery(String query, VariableAccessor variableAccessor) {
 */
 public void handleBoundaryEvent(BoundaryEvent messageBoundaryEvent, DelegateTask delegateTask,
         Properties properties) {
+    boolean isInterupting = messageBoundaryEvent.cancelActivity();
     MessageEventDefinition messageEventDefinition = (MessageEventDefinition) messageBoundaryEvent
             .getEventDefinitions().iterator().next();
     Message message = messageEventDefinition.getMessage();
@@ -84,8 +85,8 @@ public void handleBoundaryEvent(BoundaryEvent messageBoundaryEvent, DelegateTask
     String variableName = messageBoundaryEvent.getName();
     VariableAccessor accessor = varName -> delegateTask.getVariable(varName);
     String query = processQuery(documentationText, accessor);
-    requestData(query, delegateTask.getProcessInstanceId(), messageName, variableName, delegateTask.getId(),
-            properties);
+    requestData(query, delegateTask.getProcessInstanceId(), messageName + "", variableName, delegateTask.getId(),
+    properties, isInterupting);
 }
 /*
  * This method is used to handle the data object reference in this implemetation associated with receieve task
@@ -117,7 +118,7 @@ public void dataObjectReferenceImpl(Properties properties, DelegateExecution del
     query = processQuery(query, accessor);
     // The task identifier in this case is, cosidered as the task id of the receive task, it is because the receive task is not registered in the database
     requestData(query, delegateExecution.getProcessInstanceId(), message, variableName, "receiveTask",
-            properties);
+    properties, false);
 }
 
 /*
@@ -152,24 +153,12 @@ public boolean createUserTask(Properties properties, DelegateTask delegateTask) 
  * @param taskIdentifier
  * @param properties
 */
+
 private void requestData(String query, String delegateTask, String messageName, String variableName,
-        String taskIdentifier,
-        Properties properties) {
-    try {
-        String url = properties.getProperty("wfc.url") + "/RequestObservationValue/"
-                + delegateTask + "/" + messageName + "/" + variableName + "/"
-                + taskIdentifier;
-        // HttpResponse<JsonNode> httpResponse = retryPostObservation(url, query);
-        HttpResponse<JsonNode> httpResponse = Unirest.post(url).body(query).asJson();
-        logger.info(" the response log is ==>  " + httpResponse.getStatus());
-        if (httpResponse.getStatus() != 200) {
-            logger.warning("Failed to post observation value: " + httpResponse.getStatusText());
-        } else {
-            logger.info("Observation posted successfully: " + httpResponse.getStatus() + " "
-                    + httpResponse.getStatus());
-        }
-    } catch (Exception e) {
-        logger.severe("Failed to post observation value: " + e.getMessage());
+        String taskIdentifier, Properties properties, boolean isInterupting) {
+            String url = properties.getProperty("wfc.url") + "/RequestObservationValue/"
+                    + delegateTask + "/" + messageName + "/" + variableName + "/"
+                    + taskIdentifier + "/" + isInterupting;
+            Unirest.post(url).body(query).asJson();
     }
-}
 }

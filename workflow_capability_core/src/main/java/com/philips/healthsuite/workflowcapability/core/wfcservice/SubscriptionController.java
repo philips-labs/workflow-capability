@@ -5,6 +5,7 @@ import ca.uhn.fhir.parser.IParser;
 
 import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
 
+import org.apache.jena.sparql.function.library.leviathan.log;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.Resource;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +32,9 @@ public class SubscriptionController {
     @Value("${config.fhirUrl}")
     private String fhirUrl;
     private List<String> taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted = new ArrayList<>();
-    Logger logger =  Logger.getLogger(SubscriptionController.class.getName());
+    Logger logger = Logger.getLogger(SubscriptionController.class.getName());
+    private List<String> tasksToUpdate = new ArrayList<>();
+
     /**
      * @throws IOException
      */
@@ -61,16 +64,22 @@ public class SubscriptionController {
      * @param returnMessage
      * @param variableName
      * @param taskIdentifier
+     * @param isInterrupting
      * @throws IOException
-     * @throws InterruptedException 
+     * @throws InterruptedException
      */
-    @RequestMapping(value = "/OnRequestChange/{processID}/{returnMessage}/{variableName}/{taskIdentifier}", method = RequestMethod.POST)
+    @RequestMapping(value = "/OnRequestChange/{processID}/{returnMessage}/{variableName}/{taskIdentifier}/{isInterrupting}", method = RequestMethod.POST)
     void requestChangeSubscribe(@PathVariable("processID") String processID,
             @PathVariable("returnMessage") String returnMessage,
             @PathVariable("variableName") String variableName,
-            @PathVariable("taskIdentifier") String taskIdentifier) throws IOException, InterruptedException {
+            @PathVariable("taskIdentifier") String taskIdentifier,
+            @PathVariable("isInterrupting") boolean isInterrupting) throws IOException, InterruptedException {
         String[] query = this.engineQueryHandler.pendingRequests.get(processID).get(returnMessage);
-        sendDataToEngineAndUpdateTask(processID, returnMessage, variableName, taskIdentifier,"FHIR(GET):" + query[0]);
+        logger.info("Query from subscription is: " + query[0]);
+        sendDataToEngineAndUpdateTask(processID, returnMessage, variableName, taskIdentifier, isInterrupting,
+                "FHIR(GET):" + query[0]);
+        // this.fhirDataResources.removeResource((Resource)
+        // this.fhirDataResources.getResourceById(query[1], "Subscription"));
     }
 
     /**
@@ -128,45 +137,50 @@ public class SubscriptionController {
     }
 
     /**
+     * 
      * @param processID
      * @param returnMessage
      * @param variableName
      * @param taskIdentifier
+     * @param isInterrupting  // this is cancelActivity option for boundary message events true for interrupting boundary message event and false for non-interrupting boundary message event
      * @param query
      * @throws IOException
      */
-    @RequestMapping(value = "/RequestObservationValue/{processID}/{returnMessage}/{variableName}/{taskIdentifier}", method = RequestMethod.POST)
+    @RequestMapping(value = "/RequestObservationValue/{processID}/{returnMessage}/{variableName}/{taskIdentifier}/{isInterrupting}", method = RequestMethod.POST)
     @Async
-
-    public void sendDataToEngineAndUpdateTask(@PathVariable("processID") String processID,
+    public void sendDataToEngineAndUpdateTask(
+            @PathVariable("processID") String processID,
             @PathVariable("returnMessage") String returnMessage,
             @PathVariable("variableName") String variableName,
             @PathVariable("taskIdentifier") String taskIdentifier,
+            @PathVariable("isInterrupting") boolean isInterrupting,
             @RequestBody String query) {
-        final ReentrantLock lock = new ReentrantLock();
-        lock.lock();
         try {
             Resource resource = this.engineQueryHandler.getFhirResource(query, returnMessage, processID, variableName,
-                    taskIdentifier);
+                    taskIdentifier, isInterrupting);
             if (resource != null) {
-                logger.info("Query from database: " + query+ " "+returnMessage+ " "+processID+ " "+variableName+ " "+taskIdentifier);
                 IParser parser = this.ctx.newJsonParser();
                 String resourceString = parser.encodeResourceToString(resource);
                 EngineInterface engineInterface = new EngineInterfaceFactory().getEngineInterface("CAMUNDA");
-                engineInterface.sendMessage(returnMessage, processID, variableName, resourceString);
-                if (taskIdentifier.toString().equals("receiveTask")) {
-                    logger.info("Task Identifier is receiveTask");
-                    return;
+                boolean messageSent = engineInterface.sendMessage(returnMessage, processID, variableName,
+                        resourceString);
+                //check if message is sent and is interrupting to compelete the task in FHIR
+                if (isInterrupting && messageSent) {
+                        this.fhirDataResources.completeTaskInFHIR(taskIdentifier);
+                        String[] resub = this.engineQueryHandler.pendingRequests.get(processID).get(returnMessage);
+                        //check if resourse is from subscribe to remove subscribtion
+                        if (resub != null) {
+                            logger.info("Removed Resubscription: " + resub[0]);
+                            this.fhirDataResources.removeResource(
+                                    (Resource) this.fhirDataResources.getResourceById(resub[1], "Subscription"));
+                        }
                 }
-                fhirDataResources.completeTaskInFHIR(taskIdentifier.toString());
             }
-        } catch (Exception e) {
-            logger.severe("Error processing FHIR resource: " + e.getMessage());
+        } catch (IOException e) {
+            logger.severe("Unexpected Error Occured: ");
             e.printStackTrace();
-        } finally {
-            logger.info("Finally block");
-            lock.unlock();
         }
+
     }
 
     /**
@@ -190,7 +204,8 @@ public class SubscriptionController {
             }
         });
 
-    }    
+    }
+
     /**
      * @param newCarePlans
      * @throws IOException

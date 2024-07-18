@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+  fhir:
+    image: hapiproject/hapi:latest
+    ports:
+      - "8180:8080"
+    environment:
+      - hapi.fhir.subscription.resthook_enabled=true
+    networks:
+      - hswfc
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/fhir/metadata"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  camunda:
+    build:
+      context: ./engine/camunda
+    image: camunda-engine
+    ports:
+      - "8080:8080"
+    networks:
+      - hswfc
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/engine-rest/engine"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  wfc:
+    build:
+      context: ./workflow_capability_core
+    image: workflow-capability-core
+    ports:
+      - "5003:5003"
+    networks:
+      - hswfc
+    depends_on:
+      fhir:
+        condition: service_healthy
+
+networks:
+  hswfc:
+    driver: bridge

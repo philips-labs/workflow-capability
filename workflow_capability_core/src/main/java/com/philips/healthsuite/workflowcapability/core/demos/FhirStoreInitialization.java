@@ -6,11 +6,11 @@ import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataRes
 import java.util.logging.Logger;
 
 import org.apache.jena.base.Sys;
+import org.apache.jena.sparql.function.library.leviathan.log;
 import org.hl7.fhir.r4.model.Subscription;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-
 
 /**
  * Adds required subscriptions.
@@ -52,19 +52,21 @@ public class FhirStoreInitialization {
     }
 
     // public void addObservationValueChangeSubscription() {
-    //     Subscription observationValueChangeSubscription = new Subscription();
-    //     observationValueChangeSubscription.setStatus(Subscription.SubscriptionStatus.REQUESTED);
-    //     observationValueChangeSubscription.setReason("Trigger when the value of an Observation changes and is greater than zero");
-    //     observationValueChangeSubscription.setCriteria("Observation?status=final");
-    
-    //     // Setting up the channel as per the previous example
-    //     observationValueChangeSubscription.setChannel(new Subscription.SubscriptionChannelComponent()
-    //             .setType(Subscription.SubscriptionChannelType.RESTHOOK)
-    //             .setEndpoint(wfcUrl + "/OnObservationValueChange"));
-    
-    //     fhirDataResources.addResource(observationValueChangeSubscription);
+    // Subscription observationValueChangeSubscription = new Subscription();
+    // observationValueChangeSubscription.setStatus(Subscription.SubscriptionStatus.REQUESTED);
+    // observationValueChangeSubscription.setReason("Trigger when the value of an
+    // Observation changes and is greater than zero");
+    // observationValueChangeSubscription.setCriteria("Observation?status=final");
+
+    // // Setting up the channel as per the previous example
+    // observationValueChangeSubscription.setChannel(new
+    // Subscription.SubscriptionChannelComponent()
+    // .setType(Subscription.SubscriptionChannelType.RESTHOOK)
+    // .setEndpoint(wfcUrl + "/OnObservationValueChange"));
+
+    // fhirDataResources.addResource(observationValueChangeSubscription);
     // }
-    
+
     private void addCarePlanSubscription() {
         logger.info("Adding CarePlan Subscription");
         Subscription carePlanSubscription = new Subscription();
