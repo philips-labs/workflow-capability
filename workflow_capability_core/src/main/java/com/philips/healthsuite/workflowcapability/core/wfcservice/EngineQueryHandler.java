@@ -1,11 +1,12 @@
 package com.philips.healthsuite.workflowcapability.core.wfcservice;
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.Unirest;
-import kong.unirest.UnirestException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.logging.Logger;
+
 import org.elasticsearch.common.ParsingException;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
@@ -13,20 +14,14 @@ import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Subscription;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
 
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
-import java.util.logging.Logger;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
 
 public class EngineQueryHandler {
     HashMap<String, HashMap<String, String[]>> pendingRequests;
@@ -40,68 +35,19 @@ public class EngineQueryHandler {
         pendingRequests = new HashMap<>();
     }
 
-    public String removeDateParameter(String originalQuery) {
-
-        Pattern datePattern = Pattern.compile("&date=[^&]*");
-        Matcher matcher = datePattern.matcher(originalQuery);
-
-        if (matcher.find()) {
-            logger.info("Date pattern found and removed");
-            originalQuery = matcher.replaceAll("");
-        }
-
-        return originalQuery;
-    }
-
-    public String fetchByTime(String originalQuery) {
-        // Updated pattern to match the new format date=(NOW -4s)
-        Pattern timePattern = Pattern.compile("date=\\(NOW -?(\\d+)([SMHD])\\)");
-        Matcher matcher = timePattern.matcher(originalQuery);
-        if (!matcher.find()) {
-            logger.info("No time pattern found");
-            return originalQuery;
-        }
-
-        int value = Integer.parseInt(matcher.group(1));
-        String unit = matcher.group(2);
-        Instant currentDate = Instant.now();
-        switch (unit) {
-            case "S":
-                currentDate = currentDate.minus(value, ChronoUnit.SECONDS);
-                break;
-            case "M":
-                currentDate = currentDate.minus(value, ChronoUnit.MINUTES);
-                break;
-            case "H":
-                currentDate = currentDate.minus(value, ChronoUnit.HOURS);
-                break;
-            case "D":
-                currentDate = currentDate.minus(value, ChronoUnit.DAYS);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported time unit");
-        }
-
-        String isoDate = DateTimeFormatter.ISO_INSTANT.format(currentDate);
-        logger.info("Current Date is: " + isoDate + " " + unit + " " + value);
-
-        // Update the original query with the computed date
-        String updatedQuery = originalQuery.replaceAll("date=\\(NOW -?\\d+[SMHD]\\)", "date=ge" + isoDate);
-
-        return updatedQuery;
-    }
+    /*
+     * After extracting CRUD operator, the following cencepts are introduced by the workflow capability:
+     * GET -> geting data from FHIR and return
+     * FETCH -> Getting data from FHIR if empty, subscribe
+     * SUBSCRIBE -> regardless of availability of data in FHIR just SUBSCRIBE
+     */
 
     public Resource getFhirResource(@NotNull String query, String returnMessage, String processID, String variableName,
             String taskIdentifier, boolean isInterrupting) throws IOException {
         FhirContext ctx = FhirContext.forR4();
-        logger.info("Get params: " + query + ": " + returnMessage + " : " + processID + " : " + variableName + " : "
-                + taskIdentifier);
         try {
             // Extract CRUD Operator
-            String[] crudOperationSplit = query.split(":");
-            if (crudOperationSplit.length != 2) {
-                throw new IncorrectQueryException("Multiple : used");
-            }
+            String[] crudOperationSplit = query.split(":", 2);
             String crudOperation = crudOperationSplit[0];
             query = crudOperationSplit[1];
 
@@ -144,6 +90,7 @@ public class EngineQueryHandler {
         }
         return null;
     }
+
 
     private void subscribeToFhirObject(String fhirResource, String query, IParser parser, String processID,
             String returnMessage, String variableName, String taskIdentifier, boolean isInterrupting) {
@@ -228,7 +175,7 @@ public class EngineQueryHandler {
                 break;
             }
         }
-        logger.severe("Failed to fetch FHIR resource after " + retries + " retries.");
+        logger.info("Failed to fetch FHIR resource after " + retries + " retries.");
         return null;
     }
 
