@@ -1,0 +1,63 @@
+version: '3.7'
+
+# Define services
+services:
+  # FHIR server service
+  fhir:
+    # Use the latest HAPI FHIR image
+    image: hapiproject/hapi:latest
+    ports:
+      - "8180:8080"
+    # Enable REST hook for subscriptions
+    environment:
+      - hapi.fhir.subscription.resthook_enabled=true
+    # Connect the service to the hswfc network
+    networks:
+      - hswfc
+    # Define healthcheck to ensure service is running
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8180/fhir/metadata"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  # Camunda engine service
+  camunda:
+    # Build the Camunda engine image from the local context
+    build:
+      context: ./engine/camunda
+    # Use the built Camunda engine image
+    image: camunda-engine
+    ports:
+      - "8080:8080"
+    # Connect the service to the hswfc network
+    networks:
+      - hswfc
+    # Define healthcheck to ensure service is running
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/engine-rest/engine"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Workflow capability core service
+  wfc:
+    # Build the workflow capability core image from the local context
+    build:
+      context: ./workflow_capability_core
+    # Use the built workflow capability core image
+    image: workflow-capability-core
+    ports:
+      - "5003:5003"
+    # Connect the service to the hswfc network
+    networks:
+      - hswfc
+    # Ensure FHIR service is healthy before starting this service
+    depends_on:
+      fhir:
+        condition: service_healthy
+
+# Define network for communication between services
+networks:
+  hswfc:
+    driver: bridge

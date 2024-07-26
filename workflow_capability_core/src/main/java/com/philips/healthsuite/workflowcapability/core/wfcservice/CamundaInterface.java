@@ -100,25 +100,98 @@ public class CamundaInterface implements EngineInterface {
  * This method is sending message to BPM Engine waiting for the message to be received
  * @param messageID, processID, variableName, variableJson
  */
-    @Override
-    public void sendMessage(String messageID, String processID, String variableName, String variableJson) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("messageName", messageID);
-        jsonObject.put("processInstanceId", processID);
-        if (variableJson != null) {
-            JSONObject processVariables = new JSONObject();
-            JSONObject jsonVars = new JSONObject();
-            jsonVars.put("value", variableJson);
-            jsonVars.put("type", "Json");
-            processVariables.put(variableName, jsonVars);
-            jsonObject.put("processVariables", processVariables);
-        }
-        HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl +
-                        "/engine-rest/message/")
-                .header("Content-Type", "application/json")
-                .body(jsonObject)
-                .asJson();
+    // @Override
+    // public void sendMessage(String messageID, String processID, String variableName, String variableJson) {
+    //     JSONObject jsonObject = new JSONObject();
+    //     jsonObject.put("messageName", messageID);
+    //     jsonObject.put("processInstanceId", processID);
+    //     if (variableJson != null) {
+    //         JSONObject processVariables = new JSONObject();
+    //         JSONObject jsonVars = new JSONObject();
+    //         jsonVars.put("value", variableJson);
+    //         jsonVars.put("type", "Json");
+    //         processVariables.put(variableName, jsonVars);
+    //         jsonObject.put("processVariables", processVariables);
+    //     }
+    //     HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl +
+    //                     "/engine-rest/message/")
+    //             .header("Content-Type", "application/json")
+    //             .body(jsonObject)
+    //             .asJson();
         
 
+    // }
+    
+    public boolean checkProcessIsActive(String processID){
+
+        HttpResponse<JsonNode> checkResponse = Unirest.get(camundaUrl + "/engine-rest/process-instance/" + processID)
+        .header("Content-Type", "application/json")
+        .asJson();
+        logger.info("Response after checking process instance status: " + checkResponse.getStatus() + " "
+                + checkResponse.getStatusText());
+    if (checkResponse.getStatus() == 200) {
+        return true;
+    } else if (checkResponse.getStatus() == 404) {
+        // Process instance does not exist
+        logger.info("Process instance with ID " + processID + " not found.");
+        return false;
+    } else {
+        // Some other error occurred
+        logger.severe(
+                "Error checking process instance status: " + checkResponse.getStatus() + " " + checkResponse.getStatusText());
+        return false;
+    }
+
+    }
+
+    @Override
+    public boolean sendMessage(String messageID, String processID, String variableName, String variableJson) {
+        //check if process instance is active
+        if (!checkProcessIsActive(processID)){
+            logger.info("Process instance with ID " + processID + " is not active.");
+            return false;
+        }
+        int maxRetries = 3; // adjust the maximum retries as needed
+        int retries = 0;
+        boolean messageSent = false;
+
+        while (retries <= maxRetries && !messageSent) {
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("messageName", messageID);
+                jsonObject.put("processInstanceId", processID);
+                if (variableJson != null) {
+                    JSONObject processVariables = new JSONObject();
+                    JSONObject jsonVars = new JSONObject();
+                    jsonVars.put("value", variableJson);
+                    jsonVars.put("type", "Json");
+                    processVariables.put(variableName, jsonVars);
+                    jsonObject.put("processVariables", processVariables);
+                }
+
+                HttpResponse<JsonNode> httpResponse = Unirest.post(camundaUrl + "/engine-rest/message/")
+                        .header("Content-Type", "application/json")
+                        .body(jsonObject)
+                        .asJson();
+
+                if (httpResponse.getStatus() == 200 || httpResponse.getStatus() == 204) {
+                    logger.info("Message sent successfully: " + httpResponse.getStatus() + " "
+                            + httpResponse.getStatusText());
+                    messageSent = true;
+                } else {
+                    logger.info("Failed to send message: " + httpResponse.getStatusText());
+                    retries++;
+                    // wait for 1 second before retrying
+                    Thread.sleep(1000);
+                }
+            } catch (Exception e) {
+                logger.severe("Error sending message: " + e.getMessage());
+            }
+        }
+
+        if (!messageSent) {
+            logger.severe("Failed to send message after " + maxRetries + " retries");
+        }
+        return messageSent;
     }
 }

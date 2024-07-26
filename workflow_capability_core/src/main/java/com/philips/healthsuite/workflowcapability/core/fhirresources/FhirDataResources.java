@@ -3,6 +3,8 @@ package com.philips.healthsuite.workflowcapability.core.fhirresources;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.*;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.gclient.IQuery;
+import ca.uhn.fhir.rest.gclient.StringClientParam;
 
 import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
 import org.apache.logging.log4j.util.Strings;
@@ -468,67 +470,49 @@ public class FhirDataResources {
     }
 
     /**
-     * Method for marking fhir task as completed.
-     *
-     * @param taskIdentifier
-     * @throws InterruptedException
-     * 
-     */
-/**
      * Method for marking a FHIR Task as completed.
      * Each task in FHIR is identified by taskIdentifier value.
+     *
      * @param taskIdentifier
      * 
+     *
      */
-    public boolean completeTaskInFHIR(String taskIdentifier) throws InterruptedException {
-        if (taskIdentifier == null || taskIdentifier.isEmpty()) {
-            throw new IllegalArgumentException("Error: Task identifier cannot be null or empty.");
-        }
-        // The retry logic is implemented to handle the case where the task is not found in the first attempt due to Database commit delay.
-        int maxRetries = 3;
-        int retryDelayMillis = 1000;
-        
-        for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
-            try {
-                Bundle taskBundle = fhirClient.search()
-                        .forResource(Task.class)
-                        .returnBundle(Bundle.class)
-                        .execute();
 
-                if (taskBundle != null && !taskBundle.getEntry().isEmpty()) {
-                    for (BundleEntryComponent entry : taskBundle.getEntry()) {
-                        Task task = (Task) entry.getResource();
-                        for (Identifier identifier : task.getIdentifier()) {
-                            if ("taskIdentifier".equals(identifier.getSystem().toString())
-                                    && identifier.getValue().toString().equals(taskIdentifier)) {
-                                if (task.getStatus() == TaskStatus.COMPLETED) {
-                                    logger.info("Task " + task.getId() + " is already completed.");
-                                    return false;
-                                }
-                                // Update and complete the task
-                                task.setStatus(TaskStatus.COMPLETED);
-                                fhirClient.update().resource(task).execute();
-                                logger.info("Task completed: " + task.getId());
-                                return true;
-                            }
-                        }
-                    }
-                } else {
-                    logger.info("No tasks found in FHIR.");
+    public boolean completeTaskInFHIR(String taskIdentifier) {
+        int retries = 0;
+        while (retries < 5) {
+            Bundle taskBundle = fhirClient.search()
+                    .forResource(Task.class)
+                    .where(Task.STATUS.exactly().code("received"))
+                    .where(Task.IDENTIFIER.exactly().systemAndCode("taskIdentifier", taskIdentifier))
+                    .returnBundle(Bundle.class)
+                    .cacheControl(CacheControlDirective.noCache())
+                    .count(5000)
+                    .execute();
+            if (taskBundle != null && !taskBundle.getEntry().isEmpty()) {
+
+                Task task = (Task) taskBundle.getEntry().get(0).getResource();
+                if (task.getStatus() == TaskStatus.COMPLETED) {
+                    logger.info("Task " + task.getId() + " is already completed.");
+                    return false;
                 }
-            } 
-            catch (Exception e) {
-                logger.severe("Exception occurred while completing task (retry " + retryCount + "): " + e.getMessage());
+                // Update and complete the task
+                task.setStatus(TaskStatus.COMPLETED);
+                fhirClient.update().resource(task).execute();
+                logger.info("Task completed: " + task.getId());
+                return true;
+            } else {
+                try {
+                    Thread.sleep(1000);
+                    logger.info("Retrying to complete task with taskIdentifier: " + taskIdentifier);
+                } catch (InterruptedException e) {
+                    logger.severe("Thread sleep interrupted: " + e.getMessage());
+                }
+                retries++;
             }
-            try {
-                Thread.sleep(retryDelayMillis);
-            } catch (InterruptedException e) {
-                logger.severe("Thread sleep interrupted: " + e.getMessage());
-            }
-            
-            retryDelayMillis *= 2; // Exponential backoff
         }
-        throw new RuntimeException(
-                "Maximum retries : " + maxRetries+ " exceeded while completing task with taskIdentifier: " + taskIdentifier);
+
+        return false;
+
     }
 }
