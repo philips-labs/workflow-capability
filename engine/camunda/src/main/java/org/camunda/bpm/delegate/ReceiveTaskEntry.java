@@ -22,7 +22,7 @@ public class ReceiveTaskEntry implements JavaDelegate {
                 .getBpmnModelInstance(delegateExecution.getProcessDefinitionId())
                 .getModelElementById(delegateExecution.getCurrentActivityId());
         Collection<BoundaryEvent> boundaryEvents = bpmModel.getModelElementsByType(BoundaryEvent.class);
-        if (boundaryEvents.size() > 0)
+        if (!boundaryEvents.isEmpty())
             findMessageBoundaryEvent(receiveTask, boundaryEvents);
         else
             logger.info("no boundary message events");

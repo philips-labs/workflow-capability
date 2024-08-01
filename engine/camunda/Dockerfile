@@ -13,5 +13,5 @@ FROM openjdk:11-jre-slim
 # Set the working directory for the final image
 WORKDIR /app
 
-COPY --from=builder /app/target/camunda_engine-0.0.2-snapshot.jar /app
-CMD ["java", "-jar", "camunda_engine-0.0.2-snapshot.jar"]
+COPY --from=builder /app/target/camunda_engine-0.0.2-SNAPSHOT.jar /app
+CMD ["java", "-jar", "camunda_engine-0.0.2-SNAPSHOT.jar"]
