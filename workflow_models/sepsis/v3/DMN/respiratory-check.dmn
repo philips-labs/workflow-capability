@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="Definitions_0vsuh10" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.18.0">
+  <decision id="symptomValues" name="Decision 2">
+    <decisionTable id="DecisionTable_0dpimy5" hitPolicy="FIRST">
+      <input id="InputClause_0x6n6ox" label="respiratory_rate" camunda:inputVariable="respiratory_rate">
+        <inputExpression id="LiteralExpression_08at4og" typeRef="double">
+          <text>respiratory_rate.valueQuantity.value</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="isSuspected" name="isSuspected" typeRef="boolean" />
+      <rule id="DecisionRule_0ankzhe">
+        <inputEntry id="UnaryTests_16zejff">
+          <text>&lt;17</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1f2goyj">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0umabv1">
+        <inputEntry id="UnaryTests_0ecjulw">
+          <text>&gt;=17</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0xhcb4l">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="symptomValues">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
