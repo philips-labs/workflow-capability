@@ -20,7 +20,7 @@ public class UserTaskEntry implements TaskListener {
         UserTask userTask = (UserTask) bpmModel.getModelElementById(delegateTask.getTaskDefinitionKey());
         boolean isUserTaskCreated = interfaceWfcHandler.createUserTask(delegateTask);
         if (isUserTaskCreated) {
-            logger.info("User Task  with no boundary event created successfully");
+            logger.info("User Task created successfully");
         }
         Collection<BoundaryEvent> boundaryEvents = bpmModel.getModelElementsByType(BoundaryEvent.class);
         BoundaryEvent messageBoundaryEvent = findMessageBoundaryEvent(userTask, boundaryEvents);

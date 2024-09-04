@@ -143,7 +143,7 @@ public class EngineQueryHandler {
         String requestUrl = baseFhirUrl + fhirResource + "?" + query;
         int waitTime = 500; // milliseconds
         int retries = 0;
-        while (retries < 5) {
+        while (retries < 3) {
             try {
                 HttpResponse<JsonNode> httpResponse = Unirest.get(requestUrl).asJson();
                 if (httpResponse.isSuccess()) {

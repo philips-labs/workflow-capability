@@ -9,7 +9,7 @@ This model can be demonstrated with demo patients 1,2,3,4.
 the Blood Loss protocol. This model can be demonstrated with demo patients 1,2,3,4.  
 3) Sepsis v2: This is the second model we created for Sepsis protocol. It is the second full version and it utilizes custom FHIR observations specifically created for this
 treatment plan. This model can be demonstrated with demo patients 5,6,7,8,9,10.  
-
+4) Sepsis v3: This is modified version model that supports both the previous version and newly added alternative version(Message Boundary Message Event) with Time Query and without Time Query
 ## Structure  
 This is the folder/files structure of the models:  
 
@@ -33,3 +33,34 @@ This is the folder/files structure of the models:
             Sepsis_Protocol.bpmn
             Soberity_Decision.dmn
             Symptoms_Decision.dmn
+    \---v3
+            BPMN
+                CLOSED-LOOP
+                    closed-loop-interrupting.bpmn
+                    closed-loop-non-interrupting.bpmn
+                FETCH
+                    Sepsis_Protocol_Message_boundary_event.bpmn
+                    Sepsis_Protocol_Message_Boundary_Event_Time_query_MOMENT.bpmn
+                    Sepsis_Protocol_Message_Boundary_Event_Time_query_NOW.bpmn
+                    Sepsis_Protocol_Receive_Task.bpmn
+                    Sepsis_Protocol_Receive_Task_Time_query_MOMENT.bpmn
+                    Sepsis_Protocol_Receive_Task_Time_query_NOW.bpmn
+                GET
+                    Sepsis_Protocol_Message_boundary_event.bpmn
+                    Sepsis_Protocol_Message_Boundary_Event_Time_query_MOMENT.bpmn
+                    Sepsis_Protocol_Message_Boundary_Event_Time_query_NOW.bpmn
+                    Sepsis_Protocol_Receive_Task.bpmn
+                    Sepsis_Protocol_Receive_Task_Time_query_MOMENT.bpmn
+                    Sepsis_Protocol_Receive_Task_Time_query_NOW.bpmn
+                SUBSCRIBE
+                    Sepsis_Protocol_Message_boundary_event.bpmn
+                    Sepsis_Protocol_Message_Boundary_Event_Time_query_MOMENT.bpmn
+                    Sepsis_Protocol_Message_Boundary_Event_Time_query_NOW.bpmn
+                    Sepsis_Protocol_Receive_Task.bpmn
+                    Sepsis_Protocol_Receive_Task_Time_query_MOMENT.bpmn
+                    Sepsis_Protocol_Receive_Task_Time_query_NOW.bpmn
+            DMN
+                respiratory-check.dmn
+                InfectionSize_Decision.dmn
+                Soberity_Decision.dmn
+                Symptoms_Decision.dmn
