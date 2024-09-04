@@ -1,25 +1,42 @@
 package com.philips.healthsuite.workflowcapability.core.fhirresources;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.rest.api.*;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.gclient.IQuery;
-import ca.uhn.fhir.rest.gclient.StringClientParam;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.CarePlan.CarePlanActivityComponent;
 import org.hl7.fhir.r4.model.CarePlan.CarePlanStatus;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.PlanDefinition;
 import org.hl7.fhir.r4.model.PlanDefinition.PlanDefinitionActionComponent;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Task;
 import org.hl7.fhir.r4.model.Task.TaskIntent;
 import org.hl7.fhir.r4.model.Task.TaskStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.logging.Logger;
+import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
+
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.CacheControlDirective;
+import ca.uhn.fhir.rest.api.DeleteCascadeModeEnum;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.SortOrderEnum;
+import ca.uhn.fhir.rest.api.SortSpec;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
 
 /**
  * Provides queries to FHIR server.
@@ -493,20 +510,20 @@ public class FhirDataResources {
 
                 Task task = (Task) taskBundle.getEntry().get(0).getResource();
                 if (task.getStatus() == TaskStatus.COMPLETED) {
-                    logger.info("Task " + task.getId() + " is already completed.");
+                    logger.log(Level.INFO, "Task {0} is already completed.", task.getId());
                     return false;
                 }
                 // Update and complete the task
                 task.setStatus(TaskStatus.COMPLETED);
                 fhirClient.update().resource(task).execute();
-                logger.info("Task completed: " + task.getId());
+                logger.log(Level.INFO, "Task completed: {0}", task.getId());
                 return true;
             } else {
                 try {
                     Thread.sleep(1000);
-                    logger.info("Retrying to complete task with taskIdentifier: " + taskIdentifier);
+                    logger.log(Level.INFO, "Retrying to complete task with taskIdentifier: {0}", taskIdentifier);
                 } catch (InterruptedException e) {
-                    logger.severe("Thread sleep interrupted: " + e.getMessage());
+                    logger.log(Level.SEVERE, "Thread sleep interrupted: {0}", e.getMessage());
                 }
                 retries++;
             }

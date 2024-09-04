@@ -1,6 +1,7 @@
 package org.camunda.bpm.delegate;
 
 import java.util.Collection;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -25,7 +26,7 @@ public class ReceiveTaskEntry implements JavaDelegate {
         if (!boundaryEvents.isEmpty())
             findMessageBoundaryEvent(receiveTask, boundaryEvents);
         else
-            logger.info("no boundary message events");
+            logger.log(Level.INFO, "No boundary events found");
     }
     /*
      * For further implementation of the boundary message event on receive task

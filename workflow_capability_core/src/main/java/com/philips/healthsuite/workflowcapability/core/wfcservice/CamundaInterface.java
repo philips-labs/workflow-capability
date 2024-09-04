@@ -1,18 +1,17 @@
 package com.philips.healthsuite.workflowcapability.core.wfcservice;
 
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.Unirest;
-import kong.unirest.json.JSONObject;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-
 import java.util.logging.Logger;
 
 import com.philips.healthsuite.workflowcapability.core.WfcServiceApplication;
+
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
+import kong.unirest.json.JSONObject;
 
 public class CamundaInterface implements EngineInterface {
     Logger logger = Logger.getLogger(WfcServiceApplication.class.getName());
@@ -62,7 +61,7 @@ public class CamundaInterface implements EngineInterface {
                 .field("deployment-name", deploymentName)
                 .field("enable-duplicate-filtering", "false")
                 .field("deploy-changed-only", "false")
-                .field("*", bpmnFile)
+                .field("file", bpmnFile)
                 .asJson();
         if (httpResponse.getStatus() != 200) {
             logger.severe(" the error log is ==>  " + httpResponse.getStatus() + " file is " + deploymentName + " ==>");
