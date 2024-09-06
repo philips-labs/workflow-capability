@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.elasticsearch.common.ParsingException;
@@ -26,7 +27,7 @@ import kong.unirest.UnirestException;
 public class EngineQueryHandler {
     HashMap<String, HashMap<String, String[]>> pendingRequests;
     Properties properties;
-    Logger logger = Logger.getLogger(EngineQueryHandler.class.getName());
+    static final Logger logger = Logger.getLogger(EngineQueryHandler.class.getName());
 
     public EngineQueryHandler() throws IOException {
         properties = new Properties();
@@ -85,8 +86,7 @@ public class EngineQueryHandler {
             }
 
         } catch (IncorrectQueryException e) {
-            logger.info("Incorrect query, please use the format {CRUD Operation}:{FHIR Resource Type}?{FHIR Query} -> "
-                    + e);
+            logger.log(Level.INFO, "Incorrect query, please use the format '{'CRUD Operation'}':'{'FHIR Resource Type'}'?'{'FHIR Query'}' -> {0}", e);
         }
         return null;
     }
@@ -106,7 +106,7 @@ public class EngineQueryHandler {
         hook.setType(Subscription.SubscriptionChannelType.RESTHOOK);
         hook.setEndpoint(properties.get("config.wfcUrl") + "/OnRequestChange/" + processID + "/" + returnMessage + "/"
                 + variableName + "/" + taskIdentifier + "/" + isInterrupting);
-        List<StringType> headers = new ArrayList<StringType>();
+        List<StringType> headers = new ArrayList<>();
         headers.add(new StringType("returnMessage: " + returnMessage));
         headers.add(new StringType("processID: " + processID));
         headers.add(new StringType("variableName: " + variableName));
@@ -135,7 +135,9 @@ public class EngineQueryHandler {
      * 
      * @param parser - The parser to parse the FHIR resource
      * The retry mechanism is used to wait and check for the database in case FHIR
-     * is in the process of updating the database
+     * is in the process of updating the database,
+     * after experiment 5 times retry was the best to get the data from the FHIR server few seconds are needed to FHIR database to commit in case updating.
+     * 
      */
 
     public Resource getFhirObject(String fhirResource, String query, IParser parser) {
@@ -153,29 +155,27 @@ public class EngineQueryHandler {
                     }
                     logger.info("No FHIR resource found. Retrying...");
                 } else {
-                    logger.info("Failed to fetch FHIR resource. Status code: " + httpResponse.getStatus());
+                    logger.log(Level.INFO, "Failed to fetch FHIR resource. Status code: {0}", httpResponse.getStatus());
                     throw new FhirResourceAccessException(
                             "Failed to fetch FHIR resource. Status code: " + httpResponse.getStatus());
                 }
             } catch (UnirestException e) {
-                logger.severe("Network error occurred while fetching FHIR resource (retry " + (retries + 1) + "): "
-                        + e.getMessage());
+                logger.log(Level.SEVERE, "Network error occurred while fetching FHIR resource (retry {0}{1}): {2}", new Object[]{retries, 1, e.getMessage()});
             } catch (ParsingException e) {
-                logger.severe("Error parsing FHIR response (retry " + (retries + 1) + "): " + e.getMessage());
+                logger.log(Level.SEVERE, "Error parsing FHIR response (retry {0}{1}): {2}", new Object[]{retries, 1, e.getMessage()});
             } catch (Exception e) {
-                logger.severe("Unexpected exception occurred while fetching FHIR resource (retry " + (retries + 1)
-                        + "): " + e.getMessage());
+                logger.log(Level.SEVERE, "Unexpected exception occurred while fetching FHIR resource (retry {0}{1}): {2}", new Object[]{retries, 1, e.getMessage()});
             }
             waitTime *= 2;
             retries++;
             try {
                 Thread.sleep(waitTime);
             } catch (InterruptedException e) {
-                logger.severe("Thread sleep interrupted: " + e.getMessage());
+                logger.log(Level.SEVERE, "Thread sleep interrupted: {0}", e.getMessage());
                 break;
             }
         }
-        logger.info("Failed to fetch FHIR resource after " + retries + " retries.");
+        logger.log(Level.INFO, "Failed to fetch FHIR resource after {0} retries.", retries);
         return null;
     }
 

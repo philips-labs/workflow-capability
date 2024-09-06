@@ -1,24 +1,28 @@
 package com.philips.healthsuite.workflowcapability.core.wfcservice;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-
-import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
-
-import org.apache.jena.sparql.function.library.leviathan.log;
-import org.hl7.fhir.r4.model.CarePlan;
-import org.hl7.fhir.r4.model.Resource;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.web.bind.annotation.*;
-
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+
+import org.hl7.fhir.r4.model.CarePlan;
+import org.hl7.fhir.r4.model.Resource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.philips.healthsuite.workflowcapability.core.fhirresources.FhirDataResources;
+
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 
 /**
  * TODO: Add description
@@ -32,9 +36,7 @@ public class SubscriptionController {
     @Value("${config.fhirUrl}")
     private String fhirUrl;
     private List<String> taskIdentifiersAlreadySignalledToBpmnEngineAsCompleted = new ArrayList<>();
-    Logger logger = Logger.getLogger(SubscriptionController.class.getName());
-    private List<String> tasksToUpdate = new ArrayList<>();
-
+    static final Logger logger = Logger.getLogger(SubscriptionController.class.getName());
     /**
      * @throws IOException
      */
@@ -75,7 +77,6 @@ public class SubscriptionController {
             @PathVariable("taskIdentifier") String taskIdentifier,
             @PathVariable("isInterrupting") boolean isInterrupting) throws IOException, InterruptedException {
         String[] query = this.engineQueryHandler.pendingRequests.get(processID).get(returnMessage);
-        logger.info("Query from subscription is: " + query[0]);
         sendDataToEngineAndUpdateTask(processID, returnMessage, variableName, taskIdentifier, isInterrupting,
                 "FHIR(GET):" + query[0]);
         // this.fhirDataResources.removeResource((Resource)
@@ -170,7 +171,7 @@ public class SubscriptionController {
                         String[] resub = this.engineQueryHandler.pendingRequests.get(processID).get(returnMessage);
                         //check if resourse is from subscribe to remove subscribtion
                         if (resub != null) {
-                            logger.info("Removed Resubscription: " + resub[0]);
+                            logger.log(Level.INFO, "Removing Subscription");
                             this.fhirDataResources.removeResource(
                                     (Resource) this.fhirDataResources.getResourceById(resub[1], "Subscription"));
                         }
