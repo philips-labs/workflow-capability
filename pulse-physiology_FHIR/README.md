@@ -1,8 +1,12 @@
-# Physiological Model Software-FHIR Integration
+# Pulse Engine -FHIR Interface App
 
 ## Overview
 
-The Physiological Model Software-FHIR Integration is a Jupyter Notebook application that leverages the Pulse Physiology Engine to simulate physiological scenarios. The system integrates with a Fast Healthcare Interoperability Resources (FHIR) server to manage the observations recorded during simulations.
+The Pulse Engine -FHIR Interface App is a Jupyter Notebook application that leverages the Pulse Physiology Engine to simulate physiological scenarios. The system integrates with a Fast Healthcare Interoperability Resources (FHIR) server to manage the observations recorded during simulations.
+
+### Note:
+#### There are two versions of this demo due to issues with the Pulse Physiology Engine data result fetching. The updated version accesses data from a CSV file instead of direct result.
+- The Issue was reported to the kitware in the following linls: https://gitlab.kitware.com/physiology/jupyter/-/issues/3
 
 ## Prerequisites
 
