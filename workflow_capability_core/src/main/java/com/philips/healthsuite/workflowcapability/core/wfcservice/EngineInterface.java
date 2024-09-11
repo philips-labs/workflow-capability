@@ -1,6 +1,7 @@
 package com.philips.healthsuite.workflowcapability.core.wfcservice;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 public interface EngineInterface {
 
@@ -39,5 +40,5 @@ public interface EngineInterface {
      * @param variableName The name of the payload variable
      * @param variableJson The JSON value of the payload variable
      */
-    void sendMessage(String messageID, String processID, String variableName, String variableJson);
+    boolean sendMessage(String messageID, String processID, String variableName, String variableJson);
 }

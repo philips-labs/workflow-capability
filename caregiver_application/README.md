@@ -12,3 +12,4 @@
 - Run the created .jar file in the target folder:  
 	`python main.py`  
 - Access the app at: http://localhost:5000.
+- Use testmodels folder to upload the BPMN and DMN files  for this version

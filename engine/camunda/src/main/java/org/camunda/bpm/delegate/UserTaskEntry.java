@@ -1,29 +1,38 @@
 package org.camunda.bpm.delegate;
 
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
-import kong.unirest.Unirest;
+import java.util.Collection;
+import java.util.logging.Logger;
+
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.delegate.TaskListener;
-
-import java.io.IOException;
-import java.util.Properties;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.BoundaryEvent;
+import org.camunda.bpm.model.bpmn.instance.UserTask;
 
 public class UserTaskEntry implements TaskListener {
+    InterfaceWfcHandler interfaceWfcHandler = new InterfaceWfcHandler();
+    private static final Logger logger = Logger.getLogger(UserTaskEntry.class.getName());
 
     @Override
     public void notify(DelegateTask delegateTask) {
-
-        Properties properties = new Properties();
-        try {
-            properties.load(getClass().getClassLoader().getResourceAsStream("config.properties"));
-        } catch (IOException e) {
-            e.printStackTrace();
+        BpmnModelInstance bpmModel = delegateTask.getProcessEngineServices().getRepositoryService()
+                .getBpmnModelInstance(delegateTask.getProcessDefinitionId());
+        UserTask userTask = (UserTask) bpmModel.getModelElementById(delegateTask.getTaskDefinitionKey());
+        interfaceWfcHandler.createUserTask(delegateTask);
+        Collection<BoundaryEvent> boundaryEvents = bpmModel.getModelElementsByType(BoundaryEvent.class);
+        BoundaryEvent messageBoundaryEvent = findMessageBoundaryEvent(userTask, boundaryEvents);
+        if (messageBoundaryEvent != null) {
+            interfaceWfcHandler.handleBoundaryEvent(messageBoundaryEvent, delegateTask);
         }
+    }
 
-        HttpResponse<JsonNode> httpResponse = Unirest.post(properties.getProperty("wfc.url") +
-                "/RequestUserTask/" + delegateTask.getProcessInstanceId() + "/" +
-                delegateTask.getTaskDefinitionKey() + "/" + delegateTask.getId()).asJson();
+    private BoundaryEvent findMessageBoundaryEvent(UserTask userTask, Collection<BoundaryEvent> boundaryEvents) {
 
+        for (BoundaryEvent event : boundaryEvents) {
+            if (event.getAttachedTo().getId().equals(userTask.getId())) {
+                return event;
+            }
+        }
+        return null;
     }
 }

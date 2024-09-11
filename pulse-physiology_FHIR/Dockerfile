@@ -30,6 +30,7 @@ WORKDIR ${HOME}
 # Copy our notebooks to ${HOME}
 COPY *.ipynb ${HOME}/
 COPY *.py ${HOME}/
+COPY *.ini ${HOME}/
 # Copy pulse data files to ${HOME}/data
 RUN mkdir ${HOME}/data
 RUN mv /pulse/bin/config/ ${HOME}/data/

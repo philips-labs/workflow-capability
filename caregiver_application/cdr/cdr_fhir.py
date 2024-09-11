@@ -131,6 +131,7 @@ class Cdr:
             'subject': {
                 'reference': 'Patient/' + patient
             },
+            'effectiveDateTime': self.get_time_with_timezone(),
             'valueQuantity': {
                 'value': value,
                 'unit': valueQuantity_unit,
@@ -164,6 +165,7 @@ class Cdr:
             'subject': {
                 'reference': 'Patient/' + patient
             },
+            'effectiveDateTime': self.get_time_with_timezone(),
             'valueString': value
         }
         response = requests.post(self.base_url + "/Observation", data=str(jsoncp), headers=self.header)

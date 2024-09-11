@@ -1,23 +1,42 @@
 package com.philips.healthsuite.workflowcapability.core.fhirresources;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.rest.api.*;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
 import org.apache.logging.log4j.util.Strings;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.CarePlan.CarePlanActivityComponent;
 import org.hl7.fhir.r4.model.CarePlan.CarePlanStatus;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.PlanDefinition;
 import org.hl7.fhir.r4.model.PlanDefinition.PlanDefinitionActionComponent;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Task;
 import org.hl7.fhir.r4.model.Task.TaskIntent;
 import org.hl7.fhir.r4.model.Task.TaskStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import com.philips.healthsuite.workflowcapability.core.utilities.DateTimeUtil;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.CacheControlDirective;
+import ca.uhn.fhir.rest.api.DeleteCascadeModeEnum;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.SortOrderEnum;
+import ca.uhn.fhir.rest.api.SortSpec;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
 
 /**
  * Provides queries to FHIR server.
@@ -27,12 +46,13 @@ public class FhirDataResources {
     private final String fhirServerUrl;
     private final IGenericClient fhirClient;
 
+    static Logger logger = Logger.getLogger(FhirDataResources.class.getName());
 
     public FhirDataResources(String baseURL) {
         this.fhirServerUrl = baseURL;
         this.fhirClient = this.ctx.newRestfulGenericClient(this.fhirServerUrl);
-    }
 
+    }
 
     /**
      * Returns the first found Patient by Id
@@ -52,7 +72,6 @@ public class FhirDataResources {
         return null;
     }
 
-
     /**
      * Returns the first resource from a bundle
      *
@@ -60,13 +79,11 @@ public class FhirDataResources {
      * @return first FHIR Resource from bundle
      */
     public Resource getFirstBundleEntry(Bundle bundle) {
-        for (BundleEntryComponent entry : bundle.getEntry()) {
-            Resource res = entry.getResource();
-            return res;
+        if (bundle.hasEntry() && !bundle.getEntry().isEmpty()) {
+            return (Resource) bundle.getEntry().get(0).getResource();
         }
         return null;
     }
-
 
     /**
      * Returns the resource with the most recent "Last Updated" value from a bundle
@@ -88,6 +105,21 @@ public class FhirDataResources {
         return mostRecent;
     }
 
+    public Observation getMostRecentObservation() {
+        Bundle observationBundle = fhirClient.search()
+                .forResource(Observation.class)
+                .returnBundle(Bundle.class)
+                .cacheControl(CacheControlDirective.noCache())
+                .execute();
+
+        return observationBundle.getEntry().stream()
+                .map(BundleEntryComponent::getResource)
+                .filter(resource -> resource instanceof Observation)
+                .map(resource -> (Observation) resource)
+                .max(Comparator.comparing(o -> o.getMeta().getLastUpdated(),
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .orElse(null);
+    }
 
     /**
      * Returns a CarePlan from a Bundle based on an instanceID
@@ -97,7 +129,7 @@ public class FhirDataResources {
      * @return CarePlan or None if no careplan with said instanceID is found
      */
     private CarePlan getCarePlanByIdentifier(Bundle carePlanBundle, String instanceID) {
-//        System.out.println(">> This is an instanceID: " + instanceID);
+        // logger.info(">> This is an instanceID: " + instanceID);
         for (int i = 0; i < carePlanBundle.getEntry().size(); i++) {
             CarePlan carePlan = (CarePlan) carePlanBundle.getEntry().get(i).getResource();
             List<Identifier> identifierList = carePlan.getIdentifier();
@@ -110,21 +142,22 @@ public class FhirDataResources {
         return null;
     }
 
-
     /**
      * Creates a Task and attaches it to the given CarePlan as an Activity.
      *
      * @param taskIdentifier     Workflow Engine identifier of the Task
      * @param carePlanInstanceID ID of the CarePlan the Task should be appended to
-     * @param actionID           ID of the action in the PlanDefinition with the Task's information
+     * @param actionID           ID of the action in the PlanDefinition with the
+     *                           Task's information
      * @param status             The current status of the task
      * @return MethodOutcome from the POST action to the FHIR Store
      */
-    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String status) throws InterruptedException {
+    public MethodOutcome createTask(String taskIdentifier, String carePlanInstanceID, String actionID, String status)
+            throws InterruptedException {
+
         Objects.requireNonNull(carePlanInstanceID);
         Objects.requireNonNull(actionID);
         Objects.requireNonNull(status);
-
 
         CarePlan carePlan = null;
         int numberOfRetries = 10;
@@ -147,17 +180,16 @@ public class FhirDataResources {
                 numberOfRetries--;
             }
 
-
             Objects.requireNonNull(carePlan, "No CarePlan found for instanceId: " + carePlanInstanceID);
 
             // Get corresponding PlanDefinition /w actions
-            PlanDefinition planDefinition = getPlanDefinitionById(carePlan.getInstantiatesCanonical().get(0).getValue());
-            PlanDefinitionActionComponent currentAction = null;
-            for (PlanDefinitionActionComponent action : planDefinition.getAction()) {
-                if (action.getId().equals(actionID)) {
-                    currentAction = action;
-                }
-            }
+            PlanDefinition planDefinition = getPlanDefinitionById(
+                    carePlan.getInstantiatesCanonical().get(0).getValue());
+            PlanDefinitionActionComponent currentAction = planDefinition.getAction().stream()
+                    .filter(action -> action.getId().equals(actionID))
+                    .findFirst()
+                    .orElse(null);
+
             Task task = new Task();
             switch (status) {
                 case "ready":
@@ -173,38 +205,40 @@ public class FhirDataResources {
                     task.setStatus(TaskStatus.READY);
             }
             task.setIntent(TaskIntent.UNKNOWN);
-			task.setExecutionPeriod(task.getExecutionPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
-            task.addIdentifier().setSystem("camundaIdentifier").setValue(taskIdentifier);
+            task.setExecutionPeriod(task.getExecutionPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
+            task.addIdentifier().setSystem("taskIdentifier").setValue(taskIdentifier);
+
+            if (task.getExecutionPeriod() == null) {
+                task.setExecutionPeriod(new Period().setStart(DateTimeUtil.getCurrentDateWithTimezone()));
+            } else {
+                task.getExecutionPeriod().setStart(DateTimeUtil.getCurrentDateWithTimezone());
+            }
             if (currentAction != null) {
-                if (currentAction.getTitle() != null) {
-                    task.addIdentifier().setSystem("taskName").setValue(currentAction.getTitle());
-                }
-                if (currentAction.getDescription() != null) {
-                    task.setDescription(currentAction.getDescription());
-                }
+                task.setDescription(currentAction.getDescription());
+                task.addIdentifier(new Identifier().setSystem("taskName").setValue(currentAction.getTitle()));
             }
             MethodOutcome outcome = this.addResource(task);
 
             // Set correct reference in CarePlan to the created Task
-            CarePlanActivityComponent activity = new CarePlanActivityComponent();
-            activity.setReference(new Reference("Task/" + outcome.getId().getIdPart()));
+            CarePlanActivityComponent activity = new CarePlanActivityComponent()
+                    .setReference(new Reference("Task/" + outcome.getId().getIdPart()));
             List<CarePlanActivityComponent> activityList = carePlan.getActivity();
             activityList.add(activity);
             carePlan.setActivity(activityList);
-
             return fhirClient.update().resource(carePlan).execute();
         }
     }
 
-
     /**
-     * Adds a PlanDefinitionActionComponent to an already existing PlanDefinition in the FHIR Store
+     * Adds a PlanDefinitionActionComponent to an already existing PlanDefinition in
+     * the FHIR Store
      *
      * @param planID ID of the PlanDefinition in the FHIR Store
      * @param action PlanDefinitionActionComponent to be added to the PlanDefinition
      * @return The MethodOutcome return from the FHIR Server
      */
-    public MethodOutcome addActionToPlanDefinition(String planID, PlanDefinitionActionComponent action) throws NullPointerException {
+    public MethodOutcome addActionToPlanDefinition(String planID, PlanDefinitionActionComponent action)
+            throws NullPointerException {
         // Add an action to a Plan Definition
         try {
             Bundle planDefinitionBundle = fhirClient.search()
@@ -226,11 +260,11 @@ public class FhirDataResources {
         }
     }
 
-
     /**
      * Creates a FHIR PlanDefinition in the FHIR Store
      *
-     * @param planDefinition The PlanDefinition FHIR Resource which should be communicated to FHIR
+     * @param planDefinition The PlanDefinition FHIR Resource which should be
+     *                       communicated to FHIR
      * @return The MethodOutcome return from the FHIR Server
      */
     public MethodOutcome createPlanDefinition(Resource planDefinition) {
@@ -242,7 +276,6 @@ public class FhirDataResources {
                 .execute();
         return outcome;
     }
-
 
     /**
      * Adds an arbitrary FHIR Resource to the FHIR Store
@@ -259,7 +292,6 @@ public class FhirDataResources {
         return outcome;
     }
 
-
     /**
      * Queries PlanDefinition from the FHIR Store based on their ID
      *
@@ -270,7 +302,6 @@ public class FhirDataResources {
         PlanDefinition obs = fhirClient.read().resource(PlanDefinition.class).withId(id).execute();
         return obs;
     }
-
 
     /**
      * Queries CarePlan from the FHIR Store based on their ID
@@ -283,7 +314,6 @@ public class FhirDataResources {
         return obs;
     }
 
-
     /**
      * Queries Task from the FHIR Store based on their ID
      *
@@ -294,7 +324,6 @@ public class FhirDataResources {
         Task obs = fhirClient.read().resource(Task.class).withId(id).execute();
         return obs;
     }
-
 
     /**
      * Removes FHIR Resource from the FHIR Store
@@ -311,7 +340,6 @@ public class FhirDataResources {
 
         return outcome;
     }
-
 
     /**
      * Gets all Currently Active CarePlans in the FHIR Store
@@ -333,7 +361,6 @@ public class FhirDataResources {
         return newCarePlans;
     }
 
-
     /**
      * Starts a CarePlan in the Workflow Engine based on the instanceID given
      *
@@ -350,7 +377,6 @@ public class FhirDataResources {
         MethodOutcome outcome = fhirClient.update().resource(carePlan).execute();
         return outcome;
     }
-
 
     /**
      * Returns latest 5000 Tasks with status completed.
@@ -372,7 +398,6 @@ public class FhirDataResources {
         }
         return newTasks;
     }
-
 
     /**
      * Removes a Task and references to a Task from the FHIR Store
@@ -402,7 +427,6 @@ public class FhirDataResources {
         fhirClient.delete().resource(task).cascade(deleteCascadeModeEnum).execute();
     }
 
-
     /**
      * Gets a FHIR Resource based on its FHIR ID
      *
@@ -413,7 +437,6 @@ public class FhirDataResources {
     public IBaseResource getResourceById(String id, String type) {
         return fhirClient.read().resource(type).withId(id).execute();
     }
-
 
     /**
      * Get a CarePlan from the FHIR Store based on its Workflow Engine ID
@@ -431,7 +454,6 @@ public class FhirDataResources {
 
         return getCarePlanByIdentifier(carePlanBundle, engineId);
     }
-
 
     /**
      * Method for marking a FHIR CarePlan as completed.
@@ -453,8 +475,61 @@ public class FhirDataResources {
 
         carePlan.setStatus(CarePlanStatus.COMPLETED);
         carePlan.setPeriod(carePlan.getPeriod().setEnd(DateTimeUtil.getCurrentDateWithTimezone()));
-
         fhirClient.update().resource(carePlan).execute();
     }
 
+    public void updateResource(Resource resource) {
+        if (fhirClient.update().resource(resource).execute().getCreated() != null) {
+            logger.info("Resource updated successfully");
+        } else {
+            logger.severe("Resource update failed");
+        }
+    }
+
+    /**
+     * Method for marking a FHIR Task as completed.
+     * Each task in FHIR is identified by taskIdentifier value.
+     *
+     * @param taskIdentifier
+     * 
+     *
+     */
+
+    public boolean completeTaskInFHIR(String taskIdentifier) {
+        int retries = 0;
+        while (retries < 5) {
+            Bundle taskBundle = fhirClient.search()
+                    .forResource(Task.class)
+                    .where(Task.STATUS.exactly().code("received"))
+                    .where(Task.IDENTIFIER.exactly().systemAndCode("taskIdentifier", taskIdentifier))
+                    .returnBundle(Bundle.class)
+                    .cacheControl(CacheControlDirective.noCache())
+                    .count(5000)
+                    .execute();
+            if (taskBundle != null && !taskBundle.getEntry().isEmpty()) {
+
+                Task task = (Task) taskBundle.getEntry().get(0).getResource();
+                if (task.getStatus() == TaskStatus.COMPLETED) {
+                    logger.log(Level.INFO, "Task {0} is already completed.", task.getId());
+                    return false;
+                }
+                // Update and complete the task
+                task.setStatus(TaskStatus.COMPLETED);
+                fhirClient.update().resource(task).execute();
+                logger.log(Level.INFO, "Task completed: {0}", task.getId());
+                return true;
+            } else {
+                try {
+                    Thread.sleep(1000);
+                    logger.log(Level.INFO, "Retrying to complete task with taskIdentifier: {0}", taskIdentifier);
+                } catch (InterruptedException e) {
+                    logger.log(Level.SEVERE, "Thread sleep interrupted: {0}", e.getMessage());
+                }
+                retries++;
+            }
+        }
+
+        return false;
+
+    }
 }

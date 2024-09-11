@@ -5,10 +5,10 @@
 <div class="container">
   <h3>New Patient Registration Form</h3>
 
-  <form class="form-horizontal" action="/register-new-patient" method="POST">
+  <form id="patientForm" class="form-horizontal" action="/register-new-patient" method="POST">
     <div class="form-group">
       <div class="col-lg-6 col-sm-4">
-        <label class="col-sm-2" style="font-size:20px;" for="firstname">First Name:</label>
+        <label style="font-size:20px;" for="firstname">First Name:</label>
       </div>
       <div class="col-sm-4">
         <input type="text" class="form-control" id="firstname" placeholder="First Name" name="firstname" required>
@@ -35,6 +35,7 @@
     <br />
     <div style="text-align: center;">
       <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+      <button type="button" class="btn btn-secondary btn-lg" onclick="generateMockPatient()">Generate Patient</button>
     </div>
   </form>
   <br />
@@ -47,6 +48,26 @@
 
 <script>
   $("#aRegisterNewPatient").addClass("active");
+
+  function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function getRandomDate(start, end) {
+    let date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    return date.toISOString().split('T')[0];
+  }
+
+  function generateMockPatient() {
+    const firstNames = ['John', 'Jane', 'Alex', 'Emily', 'Chris', 'Katie'];
+    const lastNames = ['Smith', 'Doe', 'Brown', 'Johnson', 'Taylor', 'Lee'];
+    document.getElementById('firstname').value = firstNames[getRandomInt(0, firstNames.length - 1)];
+    document.getElementById('lastname').value = lastNames[getRandomInt(0, lastNames.length - 1)];
+    document.getElementById('birthdate').value = getRandomDate(new Date(1950, 0, 1), new Date(2000, 11, 31));
+    document.getElementById('phone_number').value = getRandomInt(1000000000, 9999999999).toString();
+  }
 </script>
 
 {% endblock %}
