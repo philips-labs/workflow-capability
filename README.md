@@ -55,6 +55,9 @@ The architecture to these models can be found here: [docs/Architecture.md](docs/
 - Docker. The image required is `docker pull hapiproject/hapi:latest`. The FHIR Server is assumed to be run on port: `8180`
 
 ## Execution  
+### Execution using docker-compose
+The HAPI FHIR, the camunda engine and the workflow capability core can build and run using the compose file `docker-compose.yml`, but since the workflow capability core runs after the HAPI FHIR is started, it may fail to run, so manual runing on the docker itslef is mandatory.
+For Pulse-Physiology_FHIR check the README ` Pulse-Physiology_FHIR\README.md` file and the Caregiver App `caregiver_application\README.md` file.
 
 ### Execution using scripts
 Note: All sh Scripts have been made for bash
