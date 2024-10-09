@@ -89,10 +89,12 @@ Use http://host.docker.internal:8180/fhir instead of http://localhost:8180/fhir 
 - Additionaly, the following class diagram provides a high-level overview of the components and their interactions in the system, highlighting how the user interface interacts with the simulation core, which in turn interacts with data management and external components.<img src="./Diagrams/class_diagram.png" alt =" Class diagram" width ="850" height = "600"/>
 
 #### To run closed loop scenario, use the following models.
- -  \---v3
-        \---BPMN
-            \---CLOSED-LOOP
-                    closed-loop-interrupting.bpmn
-                    closed-loop-non-interrupting.bpmn
-        \--DMN
-            respiratory-check.dmn
+ -  workflow_models
+        \..Sepsis
+            \---v3
+                    \---BPMN
+                        \---CLOSED-LOOP
+                                closed-loop-interrupting.bpmn
+                                closed-loop-non-interrupting.bpmn
+                    \--DMN
+                        respiratory-check.dmn
