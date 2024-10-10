@@ -98,3 +98,6 @@ The service ports and the service references can be set at the following locatio
 ## Additional information
 - This prototype is based on BPMN and DMN models, and shows an architecture that makes Vendor Replacement obtainable.
 - The application is an example application that uses the FHIR store, but can be exchanged with an arbitrary application. The application and Workflow Capability part of the system, can be used independent of eachother.
+
+#### Infromation about adding new feature
+- Please check in feature folder on Pulse-physiology_FHIR `README.md` and ` ppe_fhir.ipynb`.
